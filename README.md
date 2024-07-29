@@ -165,7 +165,7 @@ CREATE TABLE accounts (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 最后更新时间    
 );
 
-CREATE TABLE user_logins (
+CREATE TABLE sessions (
     login_id VARCHAR(255) PRIMARY KEY,       -- 唯一标识登录记录的ID
     username VARCHAR(50) NOT NULL,              -- 用户ID，外键关联到用户表
     login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 登录时间
@@ -179,7 +179,7 @@ CREATE TABLE user_logins (
     -- CONSTRAINT unique_login_per_user UNIQUE (username, login_time)  -- 确保每个用户在相同时间只能有一条登录记录
 );
 CREATE INDEX idx_column_username
-ON user_logins USING HASH (username);
+ON sessions USING HASH (username);
 
 ```
 

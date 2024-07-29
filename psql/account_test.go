@@ -6,20 +6,6 @@ import (
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	connStr := os.Getenv("DATABASE_URL")
-	Connect(connStr)
-
-	// Run the tests
-	code := m.Run()
-
-	// Teardown code after running tests
-	DB.Close()
-
-	// Exit with the result of m.Run()
-	os.Exit(code)
-}
-
 func TestTx(t *testing.T) {
 	connStr := os.Getenv("DATABASE_URL")
 	Connect(connStr)
@@ -35,8 +21,8 @@ func TestCreateAccount(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	email := "a12"
-	username := "uA1"
+	email := "a1112"
+	username := "user1"
 	passwordHash := "hash1"
 	country := "AA"
 	ipaddress := "1.1.1.1"
@@ -55,7 +41,7 @@ func TestGetAccount(t *testing.T) {
 		t.Error(err)
 	}
 	// var a *Account
-	a, _ := GetAccount(tx, "a1")
+	a, _ := GetAccount(tx, "a12")
 	_, err = GetAccount(tx, "a22")
 	fmt.Printf("%v\n", err)
 	fmt.Printf("%v\n", a)

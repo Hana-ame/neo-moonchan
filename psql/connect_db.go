@@ -9,6 +9,10 @@ import (
 var DB *sql.DB
 
 func Connect(connStr string) *sql.DB {
+	if DB != nil {
+		DB.Close()
+	}
+
 	// 连接到 PostgreSQL 数据库
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {

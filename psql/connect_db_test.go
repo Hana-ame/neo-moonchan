@@ -66,3 +66,17 @@ func TestBegin(t *testing.T) {
 	tx, err := Begin()
 	fmt.Printf("%v\n%v\n%v", DB, tx, err)
 }
+
+func TestMain(m *testing.M) {
+	connStr := os.Getenv("DATABASE_URL")
+	Connect(connStr)
+
+	// Run the tests
+	code := m.Run()
+
+	// Teardown code after running tests
+	DB.Close()
+
+	// Exit with the result of m.Run()
+	os.Exit(code)
+}
