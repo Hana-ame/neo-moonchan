@@ -5,6 +5,7 @@ import "github.com/gin-gonic/gin"
 func Main() {
 	r := gin.Default()
 
+	r.Use(sessionMiddleware())
 	r.GET("/echo", func(c *gin.Context) {
 		c.String(200, "Hello, world!")
 	})
