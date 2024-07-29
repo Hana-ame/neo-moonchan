@@ -230,3 +230,7 @@ go get -u github.com/lib/pq
 ### 1.1 链接db
 这次就不gorm了，感觉不省事。
 不如写个脚本生成代码。
+
+### 1.2 gin
+`go get -u github.com/gin-gonic/gin`
+

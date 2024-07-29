@@ -70,7 +70,7 @@ func GetAccount(tx *sql.Tx, email string) (*Account, error) {
 	return &account, nil
 }
 
-func UpdateAccount(tx *sql.Tx, email, passwordHash, newPasswordHash, flag string, failedAttempts int) error {
+func UpdateAccount(tx *sql.Tx, email, newPasswordHash, flag string, failedAttempts int) error {
 	// 更新账户信息
 	query := `
 		UPDATE accounts
