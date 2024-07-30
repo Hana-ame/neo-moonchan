@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type Session struct {
@@ -43,7 +45,7 @@ func GetSession(tx *sql.Tx, sessionID string) (*Session, error) {
 		&session.IPAddress,
 		&session.UserAgent,
 	); err != nil {
-		return nil, fmt.Errorf("could not retrieve session: %v", err)
+		return &session, fmt.Errorf("could not retrieve session: %v", err)
 	}
 
 	return &session, nil
@@ -73,7 +75,7 @@ func GetSessionList(tx *sql.Tx, username string) ([]*Session, error) {
 			&session.IPAddress,
 			&session.UserAgent,
 		); err != nil {
-			return nil, fmt.Errorf("could not scan session: %v", err)
+			return sessions, fmt.Errorf("could not scan session: %v", err)
 		}
 		sessions = append(sessions, &session)
 	}
@@ -110,6 +112,24 @@ func DeleteSession(tx *sql.Tx, sessionID string) error {
 	WHERE session_id = $1
 `
 	result, err := tx.Exec(query, sessionID)
+	if err != nil {
+		return fmt.Errorf("could not delete session: %v", err)
+	}
+	if rowsAffected, err := result.RowsAffected(); err != nil {
+		return fmt.Errorf("could not get rows affected: %v", err)
+	} else if rowsAffected == 0 {
+		return fmt.Errorf("no session found with the provided session ID")
+	}
+
+	return nil
+}
+
+func DeleteSessions(tx *sql.Tx, username string) error {
+	query := `
+	DELETE FROM sessions
+	WHERE username = $1
+`
+	result, err := tx.Exec(query, username)
 	if err != nil {
 		return fmt.Errorf("could not delete session: %v", err)
 	}

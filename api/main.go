@@ -1,22 +1,30 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	ToolsHandler "github.com/Hana-ame/neo-moonchan/Tools/gin_handler"
+	"github.com/gin-gonic/gin"
+)
 
-func Main() {
+func Main() error {
 	r := gin.Default()
-
-	r.Use(sessionMiddleware())
-	r.GET("/echo", func(c *gin.Context) {
-		c.String(200, "Hello, world!")
-	})
-	apiv1auth := r.Group("/api/v1/auth")
-	apiv1auth.Use(registerMiddleware())
+	r.Use(CORSMiddleware())
+	r.Use(headersMiddleware())
+	// echo for test
+	r.Any("/api/echo", ToolsHandler.Echo)
+	// login
+	apiv1 := r.Group("/api/v1")
 	{
-		apiv1auth.POST("/register", register)
-		apiv1auth.POST("/login", login)
-		apiv1auth.POST("/logout", logout)
-		apiv1auth.DELETE("/sesson/:id", deleteSession)
+		// accounts
+		apiv1.POST("/register", register)
+		apiv1.POST("/login", login)
+		apiv1.POST("/logout", logout)
+		// sessions
+		apiv1.GET("/sessions", sessionMiddleware(), getSessions)
+		apiv1.DELETE("/sessions", sessionMiddleware(), deleteSessions)
+		apiv1.DELETE("/session/:id", sessionMiddleware(), deleteSession)
 	}
 
-	r.Run("127.24.7.29:8080") // Default listens on :8080
+	err := r.Run("127.24.7.29:8080") // Default listens on :8080
+
+	return err
 }
