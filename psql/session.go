@@ -9,12 +9,12 @@ import (
 )
 
 type Session struct {
-	SessionID string    `gorm:"primaryKey;type:varchar(255)"`
-	Username  string    `gorm:"type:varchar(50);not null"`
-	LoginTime time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	Country   string    `gorm:"type:char(2);not null"`
-	IPAddress string    `gorm:"type:varchar(45);not null"`
-	UserAgent string    `gorm:"type:text;not null"`
+	SessionID string    `gorm:"primaryKey;type:varchar(255)" json:"session_id"`
+	Username  string    `gorm:"type:varchar(50);not null" json:"username"`
+	LoginTime time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"login_time"`
+	Country   string    `gorm:"type:char(2);not null" json:"country"`
+	IPAddress string    `gorm:"type:varchar(45);not null" json:"ip_address"`
+	UserAgent string    `gorm:"type:text;not null" json:"user_agent"`
 }
 
 func CreateSession(tx *sql.Tx, sessionID, username, country, ipAddress, userAgent string) error {

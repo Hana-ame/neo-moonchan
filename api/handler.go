@@ -92,14 +92,14 @@ func login(c *gin.Context) {
 	}
 	tx.Commit()
 
-	c.SetCookie("session_id", sessionID, 365*24*3600, "/", "", true, false)
+	c.SetCookie("session_id", sessionID, 20*365*24*60*60, "/", "", true, false)
 	c.Status(http.StatusCreated)
 }
 
 func logout(c *gin.Context) {
-	sessionID, err := c.Cookie("session_id")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	sessionID := c.GetString("session")
+	if sessionID == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "session_id not found"})
 		return
 	}
 
@@ -116,10 +116,11 @@ func logout(c *gin.Context) {
 	tx.Commit()
 
 	// delete cookie
-	c.SetCookie("session_id", sessionID, 0, "/", "", true, false)
+	c.SetCookie("session_id", sessionID, -1, "/", "", true, false)
 	c.Status(http.StatusNoContent)
 }
 
+// in fact you dont need to check the authority cuz who can do this opration must be themself.
 func deleteSession(c *gin.Context) {
 	tx, err := psql.Begin()
 	if err != nil {
@@ -136,13 +137,19 @@ func deleteSession(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// in fact you dont need to check the authority either cuz it will not cause anything if it is a invalid request.
 func deleteSessions(c *gin.Context) {
+	username := c.GetString("username")
+	if username == "" {
+		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("unauthorized"))
+	}
+
 	tx, err := psql.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := psql.DeleteSessions(tx, c.GetString("username")); err != nil {
+	if err := psql.DeleteSessions(tx, username); err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -152,13 +159,20 @@ func deleteSessions(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// in fact you dont need to check the authority once again cuz it will not cause anything if it is a invalid request.
 func getSessions(c *gin.Context) {
+	username := c.GetString("username")
+	if username == "" {
+		c.AbortWithError(http.StatusUnauthorized, fmt.Errorf("unauthorized"))
+		return
+	}
+
 	tx, err := psql.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	sessions, err := psql.GetSessionList(tx, c.GetString("username"))
+	sessions, err := psql.GetSessionList(tx, username)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

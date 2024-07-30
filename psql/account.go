@@ -9,16 +9,16 @@ import (
 )
 
 type Account struct {
-	Email          string    `gorm:"primaryKey;type:varchar(255)"`
-	Username       string    `gorm:"unique;type:varchar(50);not null"`
-	PasswordHash   string    `gorm:"type:varchar(255);not null"`
-	Country        string    `gorm:"type:char(2);not null"`
-	IPAddress      string    `gorm:"type:varchar(45);not null"`
-	Flag           string    `gorm:"type:varchar(255);not null"`
-	LastLogin      time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	FailedAttempts int       `gorm:"default:0"`
-	CreatedAt      time.Time `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt      time.Time `gorm:"default:CURRENT_TIMESTAMP"`
+	Email          string    `gorm:"primaryKey;type:varchar(255)" json:"email"`
+	Username       string    `gorm:"unique;type:varchar(50);not null" json:"username"`
+	PasswordHash   string    `gorm:"type:varchar(255);not null" json:"password_hash"`
+	Country        string    `gorm:"type:char(2);not null" json:"country"`
+	IPAddress      string    `gorm:"type:varchar(45);not null" json:"ip_address"`
+	Flag           string    `gorm:"type:varchar(255);not null" json:"flag"`
+	LastLogin      time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"last_login"`
+	FailedAttempts int       `gorm:"default:0" json:"failed_attempts"`
+	CreatedAt      time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt      time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
 
 func CreateAccount(tx *sql.Tx, email, username, passwordHash, country, ipAddress string) error {

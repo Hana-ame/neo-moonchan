@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
 )
@@ -11,12 +9,10 @@ func headersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		country := c.GetHeader("Cf-Ipcountry")
 		ipAddress := c.GetHeader("Cf-Connecting-Ip")
-		// session := c.GetHeader("M-Session")
 		userAgent := c.GetHeader("User-Agent")
 
 		c.Set("country", country)
 		c.Set("ip", ipAddress)
-		// c.Set("session", session)
 		c.Set("ua", userAgent)
 
 		c.Next()
@@ -27,26 +23,20 @@ func headersMiddleware() gin.HandlerFunc {
 func sessionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		sessionID, err := c.Cookie("session_id")
-		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, err)
-			return
+		if err == nil {
+			tx, err := psql.Begin()
+			if err == nil {
+				session, err := psql.GetSession(tx, sessionID)
+				if err != nil { // 其实应该设置一下是not found
+					c.SetCookie("session_id", sessionID, -1, "/", "", true, false)
+				} else {
+					// all success
+					c.Set("username", session.Username)
+					c.Set("session", sessionID)
+				}
+				tx.Commit()
+			}
 		}
-
-		tx, err := psql.Begin()
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-		session, err := psql.GetSession(tx, sessionID)
-		if err != nil {
-			c.SetCookie("session_id", sessionID, 0, "/", "", true, false)
-			c.AbortWithStatus(http.StatusForbidden)
-			return
-		}
-		tx.Commit()
-
-		c.Set("session", sessionID)
-		c.Set("username", session.Username)
 
 		c.Next()
 	}
