@@ -2,6 +2,7 @@ package psql
 
 import (
 	"fmt"
+	"log"
 	"testing"
 )
 
@@ -26,7 +27,10 @@ func TestCreateSession(t *testing.T) {
 		t.Fatalf("%v", err)
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 }
 
 func TestGetSession(t *testing.T) {
@@ -43,7 +47,10 @@ func TestGetSession(t *testing.T) {
 
 	fmt.Printf("%v", session)
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 }
 
 func TestUpdateSession(t *testing.T) {
@@ -62,7 +69,10 @@ func TestUpdateSession(t *testing.T) {
 	// fmt.Printf("%v", sessions[0])
 	// fmt.Printf("%v", sessions[1])
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 }
 
 func TestDeleteSession(t *testing.T) {
@@ -82,5 +92,8 @@ func TestDeleteSession(t *testing.T) {
 	// fmt.Printf("%v", sessions[0])
 	// fmt.Printf("%v", sessions[1])
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 }

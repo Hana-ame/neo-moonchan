@@ -2,6 +2,7 @@ package psql
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 )
@@ -32,7 +33,10 @@ func TestCreateAccount(t *testing.T) {
 		tx.Rollback()
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 }
 func TestGetAccount(t *testing.T) {
@@ -46,7 +50,10 @@ func TestGetAccount(t *testing.T) {
 	fmt.Printf("%v\n", err)
 	fmt.Printf("%v\n", a)
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 }
 
 func TestUpdateAccount(t *testing.T) {

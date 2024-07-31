@@ -81,7 +81,7 @@ func GetSessionList(tx *sql.Tx, username string) ([]*Session, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred during rows iteration: %v", err)
+		return sessions, fmt.Errorf("error occurred during rows iteration: %v", err)
 	}
 
 	return sessions, nil

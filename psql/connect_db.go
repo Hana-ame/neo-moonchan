@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -21,6 +22,13 @@ func Connect(connStr string) *sql.DB {
 		log.Fatal("Error connecting to the database: ", err)
 	}
 	// defer db.Close() // not today
+
+	// Set maximum open connections
+	db.SetMaxOpenConns(50)
+	// Set maximum idle connections
+	db.SetMaxIdleConns(25)
+	// Set maximum connection lifetime
+	db.SetConnMaxLifetime(time.Hour)
 
 	// 测试连接
 	err = db.Ping()

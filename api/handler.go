@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
@@ -35,7 +36,10 @@ func register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	c.Status(http.StatusCreated)
 }
@@ -69,7 +73,10 @@ func login(c *gin.Context) {
 			account.Email, account.PasswordHash, account.Flag, account.FailedAttempts+1); err != nil {
 			tx.Rollback()
 		} else {
-			tx.Commit()
+			if err := tx.Commit(); err != nil {
+				log.Printf("ex on commit: %v", err.Error())
+				tx.Rollback()
+			}
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "password mimatch"})
@@ -90,7 +97,10 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	c.SetCookie("session_id", sessionID, 20*365*24*60*60, "/", "", true, false)
 	c.Status(http.StatusCreated)
@@ -113,7 +123,10 @@ func logout(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	// delete cookie
 	c.SetCookie("session_id", sessionID, -1, "/", "", true, false)
@@ -132,7 +145,10 @@ func deleteSession(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	c.Status(http.StatusNoContent)
 }
@@ -154,7 +170,10 @@ func deleteSessions(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	c.Status(http.StatusNoContent)
 }
@@ -178,7 +197,10 @@ func getSessions(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		log.Printf("ex on commit: %v", err.Error())
+		tx.Rollback()
+	}
 
 	c.JSON(http.StatusOK, sessions)
 }

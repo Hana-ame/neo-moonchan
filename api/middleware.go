@@ -1,6 +1,8 @@
 package api
 
 import (
+	"log"
+
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +36,10 @@ func sessionMiddleware() gin.HandlerFunc {
 					c.Set("username", session.Username)
 					c.Set("session", sessionID)
 				}
-				tx.Commit()
+				if err := tx.Commit(); err != nil {
+					log.Printf("ex on commit: %v", err.Error())
+					tx.Rollback()
+				}
 			}
 		}
 
