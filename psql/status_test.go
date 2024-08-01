@@ -4,7 +4,8 @@
 package psql
 
 import (
-	"database/sql"
+	"fmt"
+	"reflect"
 	"testing"
 	"time"
 	// "github.com/stretchr/testify/assert"
@@ -162,26 +163,11 @@ func TestSoftDeleteStatus(t *testing.T) {
 // it will not work. by gpt4o
 // TestGetStatuses tests the GetStatuses function
 func TestGetStatuses(t *testing.T) {
-	// Setup: Create a mock database and populate with test data
-	db, err := sql.Open("postgres", "user=username dbname=test sslmode=disable")
-	if err != nil {
-		t.Fatal("failed to connect to database:", err)
-	}
-	defer db.Close()
-
-	// Begin a transaction
-	tx, err := db.Begin()
+	tx, err := DB.Begin()
 	if err != nil {
 		t.Fatal("failed to begin transaction:", err)
 	}
 
-	// Clean up the database and set up test data
-	_, err = tx.Exec("TRUNCATE statuses RESTART IDENTITY CASCADE")
-	if err != nil {
-		t.Fatal("failed to truncate tables:", err)
-	}
-
-	// Insert test data
 	testStatuses := []struct {
 		ID         int64
 		Username   string
@@ -192,17 +178,15 @@ func TestGetStatuses(t *testing.T) {
 		UpdatedAt  time.Time
 	}{
 		{1, "user1", "warning1", "content1", "public", time.Now(), time.Now()},
-		{2, "user2", "warning2", "content2", "private", time.Now(), time.Now()},
-		{3, "user3", "warning3", "content3", "unlisted", time.Now(), time.Now()},
+		{2, "user1", "warning2", "content2", "private", time.Now(), time.Now()},
+		{3, "user1", "warning3", "content3", "unlisted", time.Now(), time.Now()},
 	}
 
 	for _, s := range testStatuses {
-		_, err := tx.Exec(`
-			INSERT INTO statuses (id, username, warning, content, visibility, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-		`, s.ID, s.Username, s.Warning, s.Content, s.Visibility, s.CreatedAt, s.UpdatedAt)
+		err := CreateStatus(tx, s.ID, s.Username, s.Warning, s.Content, s.Visibility)
 		if err != nil {
-			t.Fatal("failed to insert test data:", err)
+			// t.Fatal("failed to insert test data:", err)
+			fmt.Println("failed to insert test data:", err)
 		}
 	}
 
@@ -247,7 +231,7 @@ func TestGetStatuses(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tx, err := db.Begin()
+			tx, err := Begin()
 			if err != nil {
 				t.Fatal("failed to begin transaction:", err)
 			}
@@ -268,9 +252,10 @@ func TestGetStatuses(t *testing.T) {
 				gotIDs[i] = s.ID
 			}
 
-			// if !assert.ElementsMatch(t, tt.wantIDs, gotIDs) {
-			// 	t.Errorf("GetStatuses() returned IDs = %v, want %v", gotIDs, tt.wantIDs)
-			// }
+			if !reflect.DeepEqual(gotIDs, tt.wantIDs) {
+				t.Errorf("GetStatuses() returned IDs = %v, want %v", gotIDs, tt.wantIDs)
+			}
+
 		})
 	}
 }

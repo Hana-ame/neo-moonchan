@@ -110,7 +110,7 @@ func SoftDeleteStatus(tx *sql.Tx, id int64) error {
 // GetStatuses 根据多个 ID 获取状态记录
 func GetStatuses(tx *sql.Tx, ids []int64) ([]*Status, error) {
 	if len(ids) == 0 {
-		return nil, fmt.Errorf("no IDs provided")
+		return nil, nil
 	}
 
 	query := `
