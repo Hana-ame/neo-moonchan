@@ -23,10 +23,10 @@ type Account struct {
 
 func CreateAccount(tx *sql.Tx, email, username, passwordHash, country, ipAddress string) error {
 	query := `
-	INSERT INTO accounts (email, username, password_hash, country, ip_address, flag)
-	VALUES ($1, $2, $3, $4, $5, $6)
+	INSERT INTO accounts (email, username, password_hash, country, ip_address)
+	VALUES ($1, $2, $3, $4, $5)
 `
-	if _, err := tx.Exec(query, email, username, passwordHash, country, ipAddress, "Padding"); err != nil {
+	if _, err := tx.Exec(query, email, username, passwordHash, country, ipAddress); err != nil {
 		return err
 	}
 
@@ -57,18 +57,6 @@ func GetAccount(tx *sql.Tx, email string) (*Account, error) {
 		return &account, fmt.Errorf("in the process of login: %v", err)
 	}
 
-	// check password
-	// if passwordHash != account.PasswordHash {
-	// 	// if mismatch, update FailedAttempts.
-	// 	if err := UpdateAccount(tx, email, passwordHash, passwordHash, account.Flag, account.FailedAttempts+1); err != nil {
-	// 		return &account, err
-	// 	}
-	// 	return &account, fmt.Errorf("password mismatch")
-	// }
-
-	// if err := UpdateAccount(tx, email, passwordHash, passwordHash, account.Flag, 0); err != nil {
-	// 	return &account, err
-	// }
 	return &account, nil
 }
 
