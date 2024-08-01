@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	tools "github.com/Hana-ame/neo-moonchan/Tools"
+	"github.com/Hana-ame/neo-moonchan/Tools/randomreader"
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +37,7 @@ func register(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -74,7 +74,7 @@ func login(c *gin.Context) {
 			tx.Rollback()
 		} else {
 			if err := tx.Commit(); err != nil {
-				log.Printf("ex on commit: %v", err.Error())
+				log.Printf("error on commit: %v", err.Error())
 				tx.Rollback()
 			}
 		}
@@ -88,7 +88,7 @@ func login(c *gin.Context) {
 	}
 	// generate an id.
 	sessionIDSlince := make([]byte, 32)
-	tools.DefaultRandomReader.Read(sessionIDSlince)
+	randomreader.Read(sessionIDSlince)
 	sessionID := string(sessionIDSlince)
 	// create session
 	if err := psql.CreateSession(tx,
@@ -98,7 +98,7 @@ func login(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -124,7 +124,7 @@ func logout(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -146,7 +146,7 @@ func deleteSession(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -171,7 +171,7 @@ func deleteSessions(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -198,7 +198,7 @@ func getSessions(c *gin.Context) {
 		return
 	}
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 

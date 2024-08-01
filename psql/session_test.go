@@ -28,7 +28,7 @@ func TestCreateSession(t *testing.T) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 }
@@ -48,7 +48,7 @@ func TestGetSession(t *testing.T) {
 	fmt.Printf("%v", session)
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 }
@@ -70,7 +70,7 @@ func TestUpdateSession(t *testing.T) {
 	// fmt.Printf("%v", sessions[1])
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 }
@@ -93,7 +93,7 @@ func TestDeleteSession(t *testing.T) {
 	// fmt.Printf("%v", sessions[1])
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 }

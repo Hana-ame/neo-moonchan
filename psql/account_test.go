@@ -34,7 +34,7 @@ func TestCreateAccount(t *testing.T) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 
@@ -51,7 +51,7 @@ func TestGetAccount(t *testing.T) {
 	fmt.Printf("%v\n", a)
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("ex on commit: %v", err.Error())
+		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
 	}
 }

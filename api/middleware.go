@@ -1,7 +1,12 @@
 package api
 
 import (
+	"encoding/base64"
+	"fmt"
 	"log"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
@@ -21,23 +26,29 @@ func headersMiddleware() gin.HandlerFunc {
 	}
 }
 
-// forbidden if give an unavaliable session
+// return forbidden if give an unavaliable session
+// after this, handler function could use c.GetString("username") to check
 func sessionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		if c.GetString("username") != "" {
+			return
+		}
 		sessionID, err := c.Cookie("session_id")
 		if err == nil {
 			tx, err := psql.Begin()
 			if err == nil {
 				session, err := psql.GetSession(tx, sessionID)
 				if err != nil { // 其实应该设置一下是not found
-					c.SetCookie("session_id", sessionID, -1, "/", "", true, false)
+					c.SetCookie("session_id", "expired", -1, "/", "", true, false)
 				} else {
 					// all success
+					c.SetCookie("token", encodeToken(session.Username, time.Now().Unix()+300), -1, "/", "", true, false)
 					c.Set("username", session.Username)
 					c.Set("session", sessionID)
 				}
 				if err := tx.Commit(); err != nil {
-					log.Printf("ex on commit: %v", err.Error())
+					log.Printf("error on commit: %v", err.Error())
 					tx.Rollback()
 				}
 			}
@@ -47,19 +58,50 @@ func sessionMiddleware() gin.HandlerFunc {
 	}
 }
 
-// CORSMiddleware 添加CORS头，允许跨域请求携带cookie
-func CORSMiddleware() gin.HandlerFunc {
+func encodeToken(username string, expireAt int64) string {
+	data := username + "." + strconv.Itoa(int(expireAt))
+	dataHash := hash(data)
+	return base64.URLEncoding.EncodeToString([]byte(data + "." + dataHash))
+}
+
+func decodeToken(token string) (username string, expireAt int, err error) {
+	var decodedSlice []byte
+	decodedSlice, err = base64.URLEncoding.DecodeString(token)
+	if err != nil {
+		return
+	}
+	tokenSlice := strings.Split(string(decodedSlice), ".")
+	if len(tokenSlice) != 3 {
+		err = fmt.Errorf("token invalid")
+		return
+	}
+	username, expireAtString, dataHash := tokenSlice[0], tokenSlice[1], tokenSlice[2]
+	data := username + "." + expireAtString
+	if dataHash != hash(data) {
+		err = fmt.Errorf("token not match")
+		return
+	}
+	expireAt, err = strconv.Atoi(expireAtString)
+	if err != nil {
+		return
+	}
+	// success
+	return
+}
+
+func tokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "http://localhost:3000") // 允许特定的前端地址
-		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
-		c.Header("Access-Control-Allow-Credentials", "true") // 允许cookie传递
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
+		token, err := c.Cookie("token")
+		if err == nil {
+			username, expireAt, err := decodeToken(token)
+			if err == nil {
+				if expireAt < int(time.Now().Unix()) {
+					c.Set("username", username)
+				} else {
+					c.SetCookie("token", "expired", -1, "/", "", true, false)
+				}
+			}
 		}
-
 		c.Next()
 	}
 }

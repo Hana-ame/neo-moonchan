@@ -8,7 +8,8 @@ import (
 func Main() error {
 	r := gin.Default()
 	// middlewares
-	r.Use(CORSMiddleware())
+	// r.Use(ToolsHandler.CORSMiddleware("http://localhost:3000")) // 其实已经不用了
+	r.Use(tokenMiddleware()) // not tested.
 	r.Use(headersMiddleware())
 	r.Use(sessionMiddleware())
 	// echo for test
