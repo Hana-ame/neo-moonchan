@@ -14,13 +14,14 @@ CREATE TABLE accounts (
     
     last_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 上次登录时间
     failed_attempts INTEGER NOT NULL DEFAULT 0,             -- 登录失败次数，默认值为0
+
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 创建时间，默认当前时间
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP -- 最后更新时间    
 );
 
 -- 创建唯一索引，确保用户名不区分大小写的唯一性
-CREATE UNIQUE INDEX unique_username 
-ON accounts (lower(username));
+CREATE UNIQUE INDEX unique_accounts_username 
+ON accounts USING HASH (lower(username));
 
 -- 创建 sessions 表
 CREATE TABLE sessions (
@@ -33,27 +34,77 @@ CREATE TABLE sessions (
 
     user_agent TEXT NOT NULL,                     -- 用户的浏览器或客户端信息
   
-    FOREIGN KEY (username) REFERENCES accounts (username) ON DELETE CASCADE -- 外键，确保引用的用户存在
+    CONSTRAINT fk_username
+        FOREIGN KEY (username) REFERENCES accounts (username) ON DELETE CASCADE -- 外键，确保引用的用户存在
 );
 
 -- 创建索引，使用 HASH 索引方式以加速查询
-CREATE INDEX idx_column_username
-ON sessions USING HASH (username);
+CREATE INDEX idx_sessions_username
+ON sessions USING HASH (lower(username));
 
 CREATE TABLE users (
     username VARCHAR(50) PRIMARY KEY,             -- 用户名，主键且不允许为空，与accounts中的username一致
     display_name VARCHAR(50),                     -- 展示用的用户名，可以为空
     avatar_url VARCHAR(255),                      -- 用户头像的链接，可以为空
     settings JSONB NOT NULL DEFAULT '{}',         -- 用户的设置，使用JSONB存储
+
     flag VARCHAR(50) NOT NULL DEFAULT 'created',   -- 用户状态，默认值为 'created'
+
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 创建时间，默认当前时间
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 最后更新时间，默认当前时间
 
-    CONSTRAINT fk_username_accounts
-    FOREIGN KEY (username) REFERENCES accounts (username) ON DELETE CASCADE -- 外键约束，确保username与accounts表中的username一致
+    CONSTRAINT fk_username
+        FOREIGN KEY (username) REFERENCES accounts (username) ON DELETE CASCADE -- 外键约束，确保username与accounts表中的username一致
 );
+
+-- 创建 statuses 表
+CREATE TABLE statuses (
+    id BIGINT PRIMARY KEY,                    -- 主键，自增长的大整数
+    username VARCHAR(50) NOT NULL,               -- 发布状态的用户名
+    warning TEXT NOT NULL,                       -- 状态内容
+    content TEXT NOT NULL,                       -- 状态内容
+    visibility VARCHAR(10) NOT NULL DEFAULT 'public',             -- 可见性权限
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 创建时间
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 更新时间
+
+    CONSTRAINT fk_username
+        FOREIGN KEY (username) 
+        REFERENCES users(username)
+        ON DELETE CASCADE,
+
+    CONSTRAINT check_visibility
+        CHECK (visibility IN ('public', 'unlisted', 'private', 'direct', 'deleted'))
+);
+
+-- 创建索引以加速查询
+CREATE INDEX idx_statuses_username 
+ON statuses USING HASH (lower(username));
+CREATE INDEX idx_statuses_visibility 
+ON statuses USING HASH (visibility);
+
+-- 我不会用
+-- -- 创建一个函数来自动更新 updated_at 列
+-- CREATE OR REPLACE FUNCTION update_modified_column()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     NEW.updated_at = now();
+--     RETURN NEW;
+-- END;
+-- $$ language 'plpgsql';
+
+-- -- 创建一个触发器，在每次更新行时调用上面的函数
+-- CREATE TRIGGER update_statuses_modtime
+--     BEFORE UPDATE ON statuses
+--     FOR EACH ROW
+--     EXECUTE FUNCTION update_modified_column();
+
 
 -- 查询当前数据库中的所有表 (你可以取消注释以执行此查询)
 -- SELECT current_database();
 -- SELECT schemaname, tablename
 -- FROM pg_tables;
+
+
+
+

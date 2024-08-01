@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"github.com/Hana-ame/neo-moonchan/Tools/orderedmap"
 )
 

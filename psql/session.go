@@ -56,6 +56,7 @@ func GetSessionList(tx *sql.Tx, username string) ([]*Session, error) {
 	SELECT session_id, username, login_time, country, ip_address, user_agent
 	FROM sessions
 	WHERE username = $1
+	ORDER BY login_time DESC
 	LIMIT 20
 `
 	rows, err := tx.Query(query, username)
