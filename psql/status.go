@@ -6,6 +6,7 @@ package psql
 import (
 	"database/sql"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/lib/pq"
@@ -64,13 +65,13 @@ func GetStatus(tx *sql.Tx, id int64) (*Status, error) {
 }
 
 // UpdateStatus 更新状态信息
-func UpdateStatus(tx *sql.Tx, id int64, warning, content, visibility string) error {
+func UpdateStatus(tx *sql.Tx, id int64, warning, content string) error {
 	query := `
 		UPDATE statuses
-		SET warning = $1, content = $2, visibility = $3, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $4
+		SET warning = $1, content = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $3
 	`
-	result, err := tx.Exec(query, warning, content, visibility, id)
+	result, err := tx.Exec(query, warning, content, id)
 	if err != nil {
 		return fmt.Errorf("could not update status: %v", err)
 	}
@@ -110,7 +111,7 @@ func SoftDeleteStatus(tx *sql.Tx, id int64) error {
 // GetStatuses 根据多个 ID 获取状态记录
 func GetStatuses(tx *sql.Tx, ids []int64) ([]*Status, error) {
 	if len(ids) == 0 {
-		return nil, nil
+		return []*Status{}, nil
 	}
 
 	query := `
@@ -153,6 +154,93 @@ func GetStatuses(tx *sql.Tx, ids []int64) ([]*Status, error) {
 			statuses = append(statuses, v)
 		}
 	}
+
+	return statuses, nil
+}
+
+func GetStatusesMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
+	query := `
+		SELECT id, username, warning, content, visibility, created_at, updated_at
+		FROM statuses
+		WHERE id < $1
+		ORDER BY id DESC
+		LIMIT $2
+	`
+	if limit <= 0 {
+		limit = 25
+	}
+
+	rows, err := tx.Query(query, maxID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("could not query statuses: %v", err)
+	}
+	defer rows.Close()
+
+	var statuses []*Status
+	for rows.Next() {
+		var status Status
+		if err := rows.Scan(
+			&status.ID,
+			&status.Username,
+			&status.Warning,
+			&status.Content,
+			&status.Visibility,
+			&status.CreatedAt,
+			&status.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("could not scan status: %v", err)
+		}
+		statuses = append(statuses, &status)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while iterating over rows: %v", err)
+	}
+
+	return statuses, nil
+}
+
+func GetStatusesMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
+	query := `
+		SELECT id, username, warning, content, visibility, created_at, updated_at
+		FROM statuses
+		WHERE id > $1
+		ORDER BY id ASC
+		LIMIT $2
+	`
+	if limit <= 0 {
+		limit = 25
+	}
+
+	rows, err := tx.Query(query, minID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("could not query statuses: %v", err)
+	}
+	defer rows.Close()
+
+	var statuses []*Status
+	for rows.Next() {
+		var status Status
+		if err := rows.Scan(
+			&status.ID,
+			&status.Username,
+			&status.Warning,
+			&status.Content,
+			&status.Visibility,
+			&status.CreatedAt,
+			&status.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("could not scan status: %v", err)
+		}
+		statuses = append(statuses, &status)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while iterating over rows: %v", err)
+	}
+
+	// reverse
+	slices.Reverse(statuses)
 
 	return statuses, nil
 }

@@ -40,10 +40,11 @@ CREATE TABLE sessions (
 
 -- 创建索引，使用 HASH 索引方式以加速查询
 CREATE INDEX idx_sessions_username
-ON sessions USING HASH (lower(username));
+ON sessions USING HASH (username);
 
 CREATE TABLE users (
     username VARCHAR(50) PRIMARY KEY,             -- 用户名，主键且不允许为空，与accounts中的username一致
+    domain VARCHAR(100),
     display_name VARCHAR(50),                     -- 展示用的用户名，可以为空
     avatar_url VARCHAR(255),                      -- 用户头像的链接，可以为空
     settings JSONB NOT NULL DEFAULT '{}',         -- 用户的设置，使用JSONB存储
@@ -78,10 +79,10 @@ CREATE TABLE statuses (
 );
 
 -- 创建索引以加速查询
-CREATE INDEX idx_statuses_username 
-ON statuses USING HASH (lower(username));
-CREATE INDEX idx_statuses_visibility 
-ON statuses USING HASH (visibility);
+-- CREATE INDEX idx_statuses_username_id 
+-- ON statuses USING BTREE (username, id);
+-- CREATE INDEX idx_statuses_visibility_username_id
+-- ON statuses USING BTREE (visibility, username, id);
 
 -- 我不会用
 -- -- 创建一个函数来自动更新 updated_at 列
@@ -99,6 +100,23 @@ ON statuses USING HASH (visibility);
 --     FOR EACH ROW
 --     EXECUTE FUNCTION update_modified_column();
 
+CREATE TABLE links (
+    link_id BIGINT PRIMARY KEY,    -- 主键，唯一标识每一条记录
+    username VARCHAR(50) NOT NULL,    -- 用户名，指示内容的所有者
+    status_id BIGINT NOT NULL,        -- 状态ID，指向原创内容或被转发内容的ID
+    visibility VARCHAR(10) NOT NULL DEFAULT 'public',  -- 可见性权限
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+
+    CONSTRAINT fk_username
+        FOREIGN KEY (username) REFERENCES accounts (username) ON DELETE CASCADE,
+    CONSTRAINT fk_status_id
+        FOREIGN KEY (status_id) REFERENCES statuses (id) ON DELETE CASCADE,
+    CONSTRAINT check_visibility
+        CHECK (visibility IN ('public', 'unlisted', 'private', 'direct', 'deleted'))
+);
+CREATE INDEX idx_links_username_link 
+ON links USING BTREE (username, link_id);
 
 -- 查询当前数据库中的所有表 (你可以取消注释以执行此查询)
 -- SELECT current_database();

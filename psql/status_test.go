@@ -97,10 +97,10 @@ func TestUpdateStatus(t *testing.T) {
 	id := int64(1)
 	newWarning := "Updated warning"
 	newContent := "Updated content"
-	newVisibility := "private"
+	// newVisibility := "private"
 
 	// 更新状态记录
-	if err := UpdateStatus(tx, id, newWarning, newContent, newVisibility); err != nil {
+	if err := UpdateStatus(tx, id, newWarning, newContent); err != nil {
 		t.Fatal("failed to update status:", err)
 		tx.Rollback()
 	}
@@ -118,9 +118,9 @@ func TestUpdateStatus(t *testing.T) {
 	if status.Content != newContent {
 		t.Fatalf("expected content %s, got %s", newContent, status.Content)
 	}
-	if status.Visibility != newVisibility {
-		t.Fatalf("expected visibility %s, got %s", newVisibility, status.Visibility)
-	}
+	// if status.Visibility != newVisibility {
+	// 	t.Fatalf("expected visibility %s, got %s", newVisibility, status.Visibility)
+	// }
 
 	if err := tx.Commit(); err != nil {
 		t.Logf("error on commit: %v", err)

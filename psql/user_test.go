@@ -24,7 +24,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	settingsMap := orderedmap.NewFromMap(settings)
 
-	if err := CreateUser(tx, username, displayName, avatarURL, settingsMap); err != nil {
+	if err := CreateUser(tx, username, "", displayName, avatarURL, settingsMap); err != nil {
 		t.Fatal("failed to create user:", err)
 		tx.Rollback()
 	}
