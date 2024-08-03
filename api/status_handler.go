@@ -1,4 +1,11 @@
 // gpt4o @ 240802
+// gpt4o @ 240803
+
+// Summary of Changes:
+// Error Handling: Errors are consistently handled, with a defer tx.Rollback() to ensure a rollback occurs in case of any error.
+// Consistency: Functions now follow a similar structure: data extraction, transaction initiation, core logic, transaction commit, and response.
+// Comments: Added comments above each function to describe its purpose clearly.
+// Readability: Improved the readability by organizing the code and adding spaces where necessary.
 
 package api
 
@@ -11,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// createStatus handles creating a new status for a user.
 func createStatus(c *gin.Context) {
 	username := c.GetString("username")
 	if username == "" {
@@ -18,7 +26,7 @@ func createStatus(c *gin.Context) {
 		return
 	}
 
-	// get data
+	// Extract data from the request
 	e, err := newExtractor(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -30,42 +38,29 @@ func createStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
+	defer tx.Rollback()
 
+	// Create status and link
 	timestamp := tools.Now()
-	if err := psql.CreateStatus(tx,
-		timestamp,
-		username,
-		e.Get("warning"),
-		e.Get("content"),
-		e.Get("visibility"),
-	); err != nil {
-		tx.Rollback()
+	if err := psql.CreateStatus(tx, timestamp, username, e.Get("warning"), e.Get("content"), e.Get("visibility")); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if err := psql.CreateLink(tx, timestamp, username, timestamp, e.Get("visibility")); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := psql.CreateLink(tx,
-		timestamp,
-		username,
-		timestamp,
-		e.Get("visibility"),
-	); err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"id": timestamp,
-	})
+	c.JSON(http.StatusCreated, gin.H{"id": timestamp})
 }
 
+// getStatus retrieves a specific status by its ID.
 func getStatus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -82,18 +77,20 @@ func getStatus(c *gin.Context) {
 
 	status, err := psql.GetStatus(tx, id)
 	if err != nil {
-		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// If the status has been deleted, return 404
 	if status.Visibility == "deleted" {
 		c.JSON(http.StatusNotFound, nil)
+		return
 	}
 
 	c.JSON(http.StatusOK, status)
 }
 
+// updateStatus updates an existing status based on its ID.
 func updateStatus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -101,7 +98,7 @@ func updateStatus(c *gin.Context) {
 		return
 	}
 
-	// get data
+	// Extract data from the request
 	e, err := newExtractor(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -113,19 +110,16 @@ func updateStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
+	defer tx.Rollback()
 
-	if err := psql.UpdateStatus(tx,
-		id,
-		e.Get("warning"),
-		e.Get("content"),
-	); err != nil {
-		tx.Rollback()
+	// Update the status
+	if err := psql.UpdateStatus(tx, id, e.Get("warning"), e.Get("content")); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
@@ -133,6 +127,7 @@ func updateStatus(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// deleteStatus soft-deletes a specific status by its ID.
 func deleteStatus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
@@ -145,15 +140,16 @@ func deleteStatus(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
+	defer tx.Rollback()
 
+	// Soft delete the status
 	if err := psql.SoftDeleteStatus(tx, id); err != nil {
-		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
 		return
 	}
@@ -161,7 +157,8 @@ func deleteStatus(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func getStatuses(c *gin.Context) {
+// getUserStatuses retrieves a list of statuses for a specific user.
+func getUserStatuses(c *gin.Context) {
 	limitString := c.DefaultQuery("limit", "0")
 	limit, _ := strconv.Atoi(limitString)
 
@@ -170,11 +167,7 @@ func getStatuses(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
-
-	rollbackWithError := func(err error) {
-		tx.Rollback()
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
+	defer tx.Rollback()
 
 	username := c.Param("username")
 	var statuses []*psql.Status
@@ -183,31 +176,31 @@ func getStatuses(c *gin.Context) {
 	case c.Query("max_id") != "":
 		maxID, err := strconv.ParseInt(c.Query("max_id"), 10, 64)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		statuses, err = psql.GetStatusesFromLinksMaxID(tx, maxID, username, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 	case c.Query("min_id") != "":
 		minID, err := strconv.ParseInt(c.Query("min_id"), 10, 64)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		statuses, err = psql.GetStatusesFromLinksMinID(tx, minID, username, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 	default:
 		statuses, err = psql.GetStatusesFromLinks(tx, username, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
@@ -215,6 +208,7 @@ func getStatuses(c *gin.Context) {
 	c.JSON(http.StatusOK, statuses)
 }
 
+// getStatusesByID retrieves statuses based on an ID range (min_id, max_id) or returns the latest statuses.
 func getStatusesByID(c *gin.Context) {
 	limitString := c.DefaultQuery("limit", "0")
 	limit, _ := strconv.Atoi(limitString)
@@ -224,11 +218,7 @@ func getStatusesByID(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
-
-	rollbackWithError := func(err error) {
-		tx.Rollback()
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
+	defer tx.Rollback()
 
 	var statuses []*psql.Status
 
@@ -236,31 +226,31 @@ func getStatusesByID(c *gin.Context) {
 	case c.Query("max_id") != "":
 		maxID, err := strconv.ParseInt(c.Query("max_id"), 10, 64)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		statuses, err = psql.GetStatusesByMaxID(tx, maxID, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 	case c.Query("min_id") != "":
 		minID, err := strconv.ParseInt(c.Query("min_id"), 10, 64)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		statuses, err = psql.GetStatusesByMinID(tx, minID, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
 	default:
-		statuses, err = psql.GetStatusesByID(tx, limit)
+		statuses, err = psql.GetLatestStatuses(tx, limit)
 		if err != nil {
-			rollbackWithError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}

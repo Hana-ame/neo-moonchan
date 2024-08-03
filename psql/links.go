@@ -1,8 +1,13 @@
+// claude.ai @ 240803
+
+// Package psql provides functions for managing links records in a PostgreSQL database.
+
 package psql
 
 import (
 	"database/sql"
 	"fmt"
+	"slices"
 	"time"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
@@ -115,15 +120,14 @@ func GetLinks(tx *sql.Tx, linkIDs []int64) ([]*Link, error) {
 		SELECT link_id, username, status_id, visibility, created_at
 		FROM links
 		WHERE link_id = ANY($1) 
-	` // instead of IN
-
+	`
 	rows, err := tx.Query(query, pq.Array(linkIDs))
 	if err != nil {
-		return nil, fmt.Errorf("could not query links: %v", err)
+		return []*Link{}, fmt.Errorf("could not query links: %v", err)
 	}
 	defer rows.Close()
 
-	linksMap := make(map[int64]*Link, 25)
+	linksMap := make(map[int64]*Link, len(linkIDs))
 	for rows.Next() {
 		var link Link
 		if err := rows.Scan(
@@ -133,17 +137,16 @@ func GetLinks(tx *sql.Tx, linkIDs []int64) ([]*Link, error) {
 			&link.Visibility,
 			&link.CreatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("could not scan link: %v", err)
+			return []*Link{}, fmt.Errorf("could not scan link: %v", err)
 		}
 		linksMap[link.LinkID] = &link
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over rows: %v", err)
+		return []*Link{}, fmt.Errorf("error occurred while iterating over rows: %v", err)
 	}
 
-	var links []*Link = make([]*Link, 0, len(linksMap))
-	// 排序结果以确保与 LinkIDs 列表的顺序一致
+	links := make([]*Link, 0, len(linksMap))
 	for _, k := range linkIDs {
 		if v, exists := linksMap[k]; exists {
 			links = append(links, v)
@@ -153,9 +156,10 @@ func GetLinks(tx *sql.Tx, linkIDs []int64) ([]*Link, error) {
 	return links, nil
 }
 
-// GetStatusesFromLinksMaxID 根据小于某个 ID 和用户名获取链接记录，并按 ID 倒序排序，返回对应的状态信息
+// GetStatusesFromLinks 根据用户名获取链接记录，并返回对应的状态信息
 func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, error) {
-	// 第一步：查询符合条件的 status_id 列表
+	limit = tools.Restrict(limit, 1, 25)
+
 	queryLinks := `
 		SELECT status_id
 		FROM links
@@ -164,80 +168,18 @@ func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, er
 		LIMIT $2
 	`
 
-	limit = tools.Restrict(limit, 1, 25)
-
-	rows, err := tx.Query(queryLinks, username, limit)
+	statusIDs, err := queryStatusIDs(tx, queryLinks, username, limit)
 	if err != nil {
-		return nil, fmt.Errorf("could not query links: %v", err)
-	}
-	defer rows.Close()
-
-	var statusIDs []int64
-	for rows.Next() {
-		var statusID int64
-		if err := rows.Scan(&statusID); err != nil {
-			return nil, fmt.Errorf("could not scan status_id: %v", err)
-		}
-		statusIDs = append(statusIDs, statusID)
+		return []*Status{}, err
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over links rows: %v", err)
-	}
-
-	if len(statusIDs) == 0 {
-		// 没有符合条件的记录时，直接返回空切片
-		return []*Status{}, nil
-	}
-
-	// 第二步：根据 status_id 列表查询状态记录
-	queryStatuses := `
-		SELECT id, username, warning, content, visibility, created_at, updated_at
-		FROM statuses
-		WHERE id = ANY($1)
-	`
-	statusRows, err := tx.Query(queryStatuses, pq.Array(statusIDs))
-	if err != nil {
-		return nil, fmt.Errorf("could not query statuses: %v", err)
-	}
-	defer statusRows.Close()
-
-	// 使用映射表来存储 status_id 与 Status 之间的关系
-	statusMap := make(map[int64]*Status, len(statusIDs))
-	for statusRows.Next() {
-		var status Status
-		if err := statusRows.Scan(
-			&status.ID,
-			&status.Username,
-			&status.Warning,
-			&status.Content,
-			&status.Visibility,
-			&status.CreatedAt,
-			&status.UpdatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("could not scan status: %v", err)
-		}
-		statusMap[status.ID] = &status
-	}
-
-	if err := statusRows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over statuses rows: %v", err)
-	}
-
-	// 第三步：按照初始的 status_id 顺序构建结果切片
-	var statuses []*Status = make([]*Status, 0, len(statusIDs))
-	for _, id := range statusIDs {
-		if status, found := statusMap[id]; found {
-			statuses = append(statuses, status)
-		}
-	}
-
-	return statuses, nil
+	return getStatusesFromIDs(tx, statusIDs)
 }
 
 // GetStatusesFromLinksMaxID 根据小于某个 ID 和用户名获取链接记录，并按 ID 倒序排序，返回对应的状态信息
 func GetStatusesFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit int) ([]*Status, error) {
-	// 第一步：查询符合条件的 status_id 列表
+	limit = tools.Restrict(limit, 1, 25)
+
 	queryLinks := `
 		SELECT status_id
 		FROM links
@@ -246,115 +188,70 @@ func GetStatusesFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit i
 		LIMIT $3
 	`
 
+	statusIDs, err := queryStatusIDs(tx, queryLinks, username, maxID, limit)
+	if err != nil {
+		return []*Status{}, err
+	}
+
+	return getStatusesFromIDs(tx, statusIDs)
+}
+
+// GetStatusesFromLinksMinID 根据大于某个 ID 和用户名获取链接记录，并按 ID 升序排序，返回对应的状态信息
+func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit int) ([]*Status, error) {
 	limit = tools.Restrict(limit, 1, 25)
 
-	rows, err := tx.Query(queryLinks, username, maxID, limit)
-	if err != nil {
-		return nil, fmt.Errorf("could not query links: %v", err)
-	}
-	defer rows.Close()
-
-	var statusIDs []int64
-	for rows.Next() {
-		var statusID int64
-		if err := rows.Scan(&statusID); err != nil {
-			return nil, fmt.Errorf("could not scan status_id: %v", err)
-		}
-		statusIDs = append(statusIDs, statusID)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over links rows: %v", err)
-	}
-
-	if len(statusIDs) == 0 {
-		// 没有符合条件的记录时，直接返回空切片
-		return []*Status{}, nil
-	}
-
-	// 第二步：根据 status_id 列表查询状态记录
-	queryStatuses := `
-		SELECT id, username, warning, content, visibility, created_at, updated_at
-		FROM statuses
-		WHERE id = ANY($1)
+	queryLinks := `
+		SELECT status_id
+		FROM links
+		WHERE username = $1 AND link_id > $2
+		ORDER BY link_id ASC
+		LIMIT $3
 	`
-	statusRows, err := tx.Query(queryStatuses, pq.Array(statusIDs))
+
+	statusIDs, err := queryStatusIDs(tx, queryLinks, username, minID, limit)
 	if err != nil {
-		return nil, fmt.Errorf("could not query statuses: %v", err)
+		return []*Status{}, err
 	}
-	defer statusRows.Close()
+	slices.Reverse(statusIDs)
 
-	// 使用映射表来存储 status_id 与 Status 之间的关系
-	statusMap := make(map[int64]*Status, len(statusIDs))
-	for statusRows.Next() {
-		var status Status
-		if err := statusRows.Scan(
-			&status.ID,
-			&status.Username,
-			&status.Warning,
-			&status.Content,
-			&status.Visibility,
-			&status.CreatedAt,
-			&status.UpdatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("could not scan status: %v", err)
-		}
-		statusMap[status.ID] = &status
-	}
-
-	if err := statusRows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over statuses rows: %v", err)
-	}
-
-	// 第三步：按照初始的 status_id 顺序构建结果切片
-	var statuses []*Status = make([]*Status, 0, len(statusIDs))
-	for _, id := range statusIDs {
-		if status, found := statusMap[id]; found {
-			statuses = append(statuses, status)
-		}
+	statuses, err := getStatusesFromIDs(tx, statusIDs)
+	if err != nil {
+		return []*Status{}, err
 	}
 
 	return statuses, nil
 }
 
-// GetStatusesFromLinksMinID 根据大于某个 ID 和用户名获取链接记录，并按 ID 升序排序，返回对应的状态信息
-func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit int) ([]*Status, error) {
-	// 第一步：查询符合条件的 status_id 列表
-	queryLinks := `
-			SELECT status_id
-			FROM links
-			WHERE username = $1 AND link_id > $2
-			ORDER BY link_id ASC
-			LIMIT $3
-	`
-
-	limit = tools.Restrict(limit, 1, 25)
-
-	rows, err := tx.Query(queryLinks, username, minID, limit)
+// queryStatusIDs 是一个辅助函数，用于执行查询并返回 status_id 列表
+func queryStatusIDs(tx *sql.Tx, query string, args ...interface{}) ([]int64, error) {
+	rows, err := tx.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("could not query links: %v", err)
+		return []int64{}, fmt.Errorf("could not query links: %v", err)
 	}
 	defer rows.Close()
 
-	var statusIDs []int64
+	var statusIDs []int64 = make([]int64, 0, 25)
 	for rows.Next() {
 		var statusID int64
 		if err := rows.Scan(&statusID); err != nil {
-			return nil, fmt.Errorf("could not scan status_id: %v", err)
+			return statusIDs, fmt.Errorf("could not scan status_id: %v", err)
 		}
 		statusIDs = append(statusIDs, statusID)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over links rows: %v", err)
+		return statusIDs, fmt.Errorf("error occurred while iterating over links rows: %v", err)
 	}
 
+	return statusIDs, nil
+}
+
+// getStatusesFromIDs 是一个辅助函数，用于根据 status_id 列表获取对应的状态信息
+func getStatusesFromIDs(tx *sql.Tx, statusIDs []int64) ([]*Status, error) {
 	if len(statusIDs) == 0 {
-		// 没有符合条件的记录时，直接返回空切片
 		return []*Status{}, nil
 	}
 
-	// 第二步：根据 status_id 列表查询状态记录
 	queryStatuses := `
 		SELECT id, username, warning, content, visibility, created_at, updated_at
 		FROM statuses
@@ -362,11 +259,10 @@ func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit i
 	`
 	statusRows, err := tx.Query(queryStatuses, pq.Array(statusIDs))
 	if err != nil {
-		return nil, fmt.Errorf("could not query statuses: %v", err)
+		return []*Status{}, fmt.Errorf("could not query statuses: %v", err)
 	}
 	defer statusRows.Close()
 
-	// 使用映射表来存储 status_id 与 Status 之间的关系
 	statusMap := make(map[int64]*Status, len(statusIDs))
 	for statusRows.Next() {
 		var status Status
@@ -379,17 +275,16 @@ func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit i
 			&status.CreatedAt,
 			&status.UpdatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("could not scan status: %v", err)
+			return []*Status{}, fmt.Errorf("could not scan status: %v", err)
 		}
 		statusMap[status.ID] = &status
 	}
 
 	if err := statusRows.Err(); err != nil {
-		return nil, fmt.Errorf("error occurred while iterating over statuses rows: %v", err)
+		return []*Status{}, fmt.Errorf("error occurred while iterating over statuses rows: %v", err)
 	}
 
-	// 第三步：按照初始的 status_id 顺序构建结果切片
-	var statuses []*Status = make([]*Status, 0, len(statusIDs))
+	statuses := make([]*Status, 0, len(statusIDs))
 	for _, id := range statusIDs {
 		if status, found := statusMap[id]; found {
 			statuses = append(statuses, status)

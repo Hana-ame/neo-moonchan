@@ -33,7 +33,7 @@ func Main() error {
 			apiv1status.DELETE("/:id", deleteStatus) // 删除状态
 		}
 		apiv1.GET("/statuses", getStatusesByID)
-		apiv1.GET("/:username/statuses", getStatuses)
+		apiv1.GET("/:username/statuses", getUserStatuses)
 	}
 
 	err := r.Run("127.24.7.29:8080") // Default listens on :8080

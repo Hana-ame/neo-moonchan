@@ -60,7 +60,7 @@ func TestUpdateSession(t *testing.T) {
 	}
 
 	// sessionID := "sess123"
-	sessions, err := GetSessionList(tx, "user1")
+	sessions, err := GetSessions(tx, "user1")
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

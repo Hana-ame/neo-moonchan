@@ -237,7 +237,7 @@ func TestGetStatuses(t *testing.T) {
 			}
 			defer tx.Rollback()
 
-			statuses, err := GetStatuses(tx, tt.ids)
+			statuses, err := GetStatusesByIds(tx, tt.ids)
 			if (err != nil) != tt.wantError {
 				t.Errorf("GetStatuses() error = %v, wantError %v", err, tt.wantError)
 				return
