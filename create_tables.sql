@@ -51,6 +51,8 @@ CREATE TABLE users (
     domain VARCHAR(100),
     display_name VARCHAR(50),                     -- 展示用的用户名，可以为空
     avatar_url VARCHAR(255),                      -- 用户头像的链接，可以为空
+    bios TEXT,
+    fields JSONB NOT NULL DEFAULT '{}',
     settings JSONB NOT NULL DEFAULT '{}',         -- 用户的设置，使用JSONB存储
 
     flag VARCHAR(50) NOT NULL DEFAULT 'created',   -- 用户状态，默认值为 'created'
@@ -128,6 +130,6 @@ ON links USING BTREE (username, link_id);
  FROM pg_tables;
 
 
-ALTER TABLE users
-ADD COLUMN bios TEXT,                                      -- 新增 bios 字段
-ADD COLUMN fields JSONB NOT NULL DEFAULT '{}'::jsonb;    -- 新增 fields 字段
+-- ALTER TABLE users
+-- ADD COLUMN bios TEXT,                                      -- 新增 bios 字段
+-- ADD COLUMN fields JSONB NOT NULL DEFAULT '{}'::jsonb;    -- 新增 fields 字段

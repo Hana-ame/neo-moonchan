@@ -32,7 +32,7 @@ func Main() error {
 			apiv1status.PUT("/:id", updateStatus)    // 更新状态
 			apiv1status.DELETE("/:id", deleteStatus) // 删除状态
 		}
-		apiv1.GET("/statuses", getStatusesByID)
+		apiv1.GET("/statuses", getStatuses)
 		apiv1.GET("/:username/statuses", getUserStatuses)
 	}
 

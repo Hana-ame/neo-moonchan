@@ -156,8 +156,8 @@ func GetLinks(tx *sql.Tx, linkIDs []int64) ([]*Link, error) {
 	return links, nil
 }
 
-// GetStatusesFromLinks 根据用户名获取链接记录，并返回对应的状态信息
-func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, error) {
+// GetLatestStatusesByUsernameFromLinks 根据用户名获取链接记录，并返回对应的状态信息
+func GetLatestStatusesByUsernameFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, error) {
 	limit = tools.Restrict(limit, 1, 25)
 
 	queryLinks := `
@@ -176,8 +176,8 @@ func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, er
 	return getStatusesFromIDs(tx, statusIDs)
 }
 
-// GetStatusesFromLinksMaxID 根据小于某个 ID 和用户名获取链接记录，并按 ID 倒序排序，返回对应的状态信息
-func GetStatusesFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit int) ([]*Status, error) {
+// GetStatusesByUsernameFromLinksMaxID 根据小于某个 ID 和用户名获取链接记录，并按 ID 倒序排序，返回对应的状态信息
+func GetStatusesByUsernameFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit int) ([]*Status, error) {
 	limit = tools.Restrict(limit, 1, 25)
 
 	queryLinks := `
@@ -196,8 +196,8 @@ func GetStatusesFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit i
 	return getStatusesFromIDs(tx, statusIDs)
 }
 
-// GetStatusesFromLinksMinID 根据大于某个 ID 和用户名获取链接记录，并按 ID 升序排序，返回对应的状态信息
-func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit int) ([]*Status, error) {
+// GetStatusesByUsernameFromLinksMinID 根据大于某个 ID 和用户名获取链接记录，并按 ID 升序排序，返回对应的状态信息
+func GetStatusesByUsernameFromLinksMinID(tx *sql.Tx, minID int64, username string, limit int) ([]*Status, error) {
 	limit = tools.Restrict(limit, 1, 25)
 
 	queryLinks := `
