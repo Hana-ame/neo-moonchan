@@ -24,7 +24,7 @@ func TestCreateUser(t *testing.T) {
 	}
 	settingsMap := orderedmap.NewFromMap(settings)
 
-	if err := CreateUser(tx, username, "", displayName, avatarURL, settingsMap); err != nil {
+	if err := CreateUser(tx, username, "", displayName, avatarURL, "", "", settingsMap); err != nil {
 		t.Fatal("failed to create user:", err)
 		tx.Rollback()
 	}
@@ -105,7 +105,7 @@ func TestUpdateUser(t *testing.T) {
 	newFlag := "inactive"
 
 	// Update the user
-	if err := UpdateUser(tx, username, newDisplayName, newAvatarURL, newSettingsMap, newFlag); err != nil {
+	if err := UpdateUser(tx, username, newDisplayName, newAvatarURL, "newbio", "{}", newSettingsMap, newFlag); err != nil {
 		t.Fatal("failed to update user:", err)
 		tx.Rollback()
 	}

@@ -16,9 +16,11 @@ import (
 // User 表示 users 表的结构体
 type User struct {
 	Username    string                 `gorm:"primaryKey;type:varchar(50);not null" json:"username"`
-	Domain      string                 `gorm:"type:varchar(100)" json:"domain"` // 新增的 domain 字段
+	Domain      string                 `gorm:"type:varchar(100)" json:"domain"`
 	DisplayName string                 `gorm:"type:varchar(50)" json:"display_name"`
 	AvatarURL   string                 `gorm:"type:varchar(255)" json:"avatar_url"`
+	Bios        string                 `gorm:"type:text" json:"bios"`                         // 新增 bios 字段
+	Fields      map[string]interface{} `gorm:"type:json;not null;default:'{}'" json:"fields"` // 新增 fields 字段
 	Settings    *orderedmap.OrderedMap `gorm:"type:json;not null;default:'{}'" json:"settings"`
 	Flag        string                 `gorm:"type:varchar(50);not null;default:'active'" json:"flag"`
 	CreatedAt   time.Time              `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
@@ -26,18 +28,22 @@ type User struct {
 }
 
 // CreateUser 插入一个新的用户到 users 表中
-func CreateUser(tx *sql.Tx, username, domain, displayName, avatarURL string, settings *orderedmap.OrderedMap) error {
+func CreateUser(tx *sql.Tx, username, domain, displayName, avatarURL, bios, fieldsJSON string, settings *orderedmap.OrderedMap) error {
+
 	// 将 settings 转换为 JSON 字符串
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		return fmt.Errorf("could not marshal settings: %v", err)
 	}
+	if settings == nil {
+		settingsJSON = []byte("{}")
+	}
 
 	query := `
-	INSERT INTO users (username, domain, display_name, avatar_url, settings, flag)
-	VALUES ($1, $2, $3, $4, $5, 'active')
+	INSERT INTO users (username, domain, display_name, avatar_url, bios, fields, settings, flag)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
 	`
-	if _, err := tx.Exec(query, username, domain, displayName, avatarURL, settingsJSON); err != nil {
+	if _, err := tx.Exec(query, username, domain, displayName, avatarURL, bios, fieldsJSON, settingsJSON); err != nil {
 		return fmt.Errorf("could not create user: %v", err)
 	}
 
@@ -78,19 +84,23 @@ func GetUser(tx *sql.Tx, username string) (*User, error) {
 }
 
 // UpdateUser 更新用户信息
-func UpdateUser(tx *sql.Tx, username, displayName, avatarURL string, settings *orderedmap.OrderedMap, flag string) error {
+func UpdateUser(tx *sql.Tx, username, displayName, avatarURL, bios, fieldsJSON string, settings *orderedmap.OrderedMap, flag string) error {
+
 	// 将 settings 转换为 JSON 字符串
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		return fmt.Errorf("could not marshal settings: %v", err)
 	}
+	if settings == nil {
+		settingsJSON = []byte("{}")
+	}
 
 	query := `
-		UPDATE users
-		SET display_name = $1, avatar_url = $2, settings = $3, flag = $4, updated_at = CURRENT_TIMESTAMP
-		WHERE username = $5
+	UPDATE users
+	SET display_name = $1, avatar_url = $2, bios = $3, fields = $4, settings = $5, flag = $6, updated_at = CURRENT_TIMESTAMP
+	WHERE username = $7
 	`
-	result, err := tx.Exec(query, displayName, avatarURL, settingsJSON, flag, username)
+	result, err := tx.Exec(query, displayName, avatarURL, bios, fieldsJSON, settingsJSON, flag, username)
 	if err != nil {
 		return fmt.Errorf("could not update user: %v", err)
 	}

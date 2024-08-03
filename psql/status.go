@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 // Status 表示 statuses 表的结构体

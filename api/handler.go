@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/Hana-ame/neo-moonchan/Tools/randomreader"
 	"github.com/Hana-ame/neo-moonchan/psql"
@@ -24,6 +25,7 @@ func register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	err = psql.CreateAccount(tx,
 		e.Get("email"),
 		e.Get("username"),
@@ -36,9 +38,20 @@ func register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	err = psql.CreateUser(tx,
+		e.Get("username"),
+		os.Getenv("DOMAIN"),
+		e.Get("username"),
+		os.Getenv("DEFAULT_AVATAR"),
+		"",
+		"{}",
+		nil,
+	)
+
 	if err := tx.Commit(); err != nil {
 		log.Printf("error on commit: %v", err.Error())
 		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
 	c.Status(http.StatusCreated)
