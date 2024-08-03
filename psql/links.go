@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	tools "github.com/Hana-ame/neo-moonchan/Tools"
 	"github.com/lib/pq"
 )
 
@@ -163,9 +164,7 @@ func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, er
 		LIMIT $2
 	`
 
-	if limit <= 0 {
-		limit = 25
-	}
+	limit = tools.Restrict(limit, 1, 25)
 
 	rows, err := tx.Query(queryLinks, username, limit)
 	if err != nil {
@@ -247,9 +246,7 @@ func GetStatusesFromLinksMaxID(tx *sql.Tx, maxID int64, username string, limit i
 		LIMIT $3
 	`
 
-	if limit <= 0 {
-		limit = 25
-	}
+	limit = tools.Restrict(limit, 1, 25)
 
 	rows, err := tx.Query(queryLinks, username, maxID, limit)
 	if err != nil {
@@ -331,9 +328,7 @@ func GetStatusesFromLinksMinID(tx *sql.Tx, minID int64, username string, limit i
 			LIMIT $3
 	`
 
-	if limit <= 0 {
-		limit = 25
-	}
+	limit = tools.Restrict(limit, 1, 25)
 
 	rows, err := tx.Query(queryLinks, username, minID, limit)
 	if err != nil {
