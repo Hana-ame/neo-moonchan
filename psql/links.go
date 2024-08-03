@@ -160,7 +160,7 @@ func GetStatusesFromLinks(tx *sql.Tx, username string, limit int) ([]*Status, er
 		FROM links
 		WHERE username = $1 
 		ORDER BY link_id DESC
-		LIMIT $3
+		LIMIT $2
 	`
 
 	if limit <= 0 {

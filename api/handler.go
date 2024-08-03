@@ -47,6 +47,11 @@ func register(c *gin.Context) {
 		"{}",
 		nil,
 	)
+	if err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
 	if err := tx.Commit(); err != nil {
 		log.Printf("error on commit: %v", err.Error())

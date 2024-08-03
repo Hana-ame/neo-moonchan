@@ -61,7 +61,9 @@ func createStatus(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusCreated)
+	c.JSON(http.StatusCreated, gin.H{
+		"id": timestamp,
+	})
 }
 
 func getStatus(c *gin.Context) {
@@ -204,6 +206,59 @@ func getStatuses(c *gin.Context) {
 
 	default:
 		statuses, err = psql.GetStatusesFromLinks(tx, username, limit)
+		if err != nil {
+			rollbackWithError(err)
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, statuses)
+}
+
+func getStatusesByID(c *gin.Context) {
+	limitString := c.DefaultQuery("limit", "0")
+	limit, _ := strconv.Atoi(limitString)
+
+	tx, err := psql.Begin()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
+		return
+	}
+
+	rollbackWithError := func(err error) {
+		tx.Rollback()
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+
+	var statuses []*psql.Status
+
+	switch {
+	case c.Query("max_id") != "":
+		maxID, err := strconv.ParseInt(c.Query("max_id"), 10, 64)
+		if err != nil {
+			rollbackWithError(err)
+			return
+		}
+		statuses, err = psql.GetStatusesByMaxID(tx, maxID, limit)
+		if err != nil {
+			rollbackWithError(err)
+			return
+		}
+
+	case c.Query("min_id") != "":
+		minID, err := strconv.ParseInt(c.Query("min_id"), 10, 64)
+		if err != nil {
+			rollbackWithError(err)
+			return
+		}
+		statuses, err = psql.GetStatusesByMinID(tx, minID, limit)
+		if err != nil {
+			rollbackWithError(err)
+			return
+		}
+
+	default:
+		statuses, err = psql.GetStatusesByID(tx, limit)
 		if err != nil {
 			rollbackWithError(err)
 			return

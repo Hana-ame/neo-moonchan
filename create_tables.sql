@@ -1,5 +1,5 @@
 -- 选择当前数据库 (你可以取消注释并修改数据库名)
--- SELECT current_database();
+ SELECT current_database();
 
 -- 创建 accounts 表
 CREATE TABLE accounts (
@@ -17,11 +17,15 @@ CREATE TABLE accounts (
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 创建时间，默认当前时间
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP -- 最后更新时间    
+
+    CONSTRAINT username_format CHECK (username ~ '^[0-9a-zA-Z_]+$')
+    -- CONSTRAINT email_format CHECK (email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
 -- 创建唯一索引，确保用户名不区分大小写的唯一性
 CREATE UNIQUE INDEX unique_accounts_username 
-ON accounts USING HASH (lower(username));
+ON accounts (lower(username));
+-- cannot use hash.
 
 -- 创建 sessions 表
 CREATE TABLE sessions (
@@ -119,10 +123,11 @@ CREATE INDEX idx_links_username_link
 ON links USING BTREE (username, link_id);
 
 -- 查询当前数据库中的所有表 (你可以取消注释以执行此查询)
--- SELECT current_database();
--- SELECT schemaname, tablename
--- FROM pg_tables;
+ SELECT current_database();
+ SELECT schemaname, tablename
+ FROM pg_tables;
 
 
-
-
+ALTER TABLE users
+ADD COLUMN bios TEXT,                                      -- 新增 bios 字段
+ADD COLUMN fields JSONB NOT NULL DEFAULT '{}'::jsonb;    -- 新增 fields 字段

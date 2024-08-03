@@ -157,7 +157,7 @@ func GetStatuses(tx *sql.Tx, ids []int64) ([]*Status, error) {
 	return statuses, nil
 }
 
-func GetStatusesMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
+func GetStatusesByMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
 	query := `
 		SELECT id, username, warning, content, visibility, created_at, updated_at
 		FROM statuses
@@ -175,7 +175,7 @@ func GetStatusesMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
 	}
 	defer rows.Close()
 
-	var statuses []*Status
+	var statuses []*Status = make([]*Status, 0, limit)
 	for rows.Next() {
 		var status Status
 		if err := rows.Scan(
@@ -199,7 +199,7 @@ func GetStatusesMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
 	return statuses, nil
 }
 
-func GetStatusesMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
+func GetStatusesByMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
 	query := `
 		SELECT id, username, warning, content, visibility, created_at, updated_at
 		FROM statuses
@@ -217,7 +217,7 @@ func GetStatusesMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
 	}
 	defer rows.Close()
 
-	var statuses []*Status
+	var statuses []*Status = make([]*Status, 0, limit)
 	for rows.Next() {
 		var status Status
 		if err := rows.Scan(
@@ -240,6 +240,50 @@ func GetStatusesMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
 
 	// reverse
 	slices.Reverse(statuses)
+
+	return statuses, nil
+}
+
+func GetStatusesByID(tx *sql.Tx, limit int) ([]*Status, error) {
+	query := `
+		SELECT id, username, warning, content, visibility, created_at, updated_at
+		FROM statuses
+		ORDER BY id DESC
+		LIMIT $1
+	`
+	if limit <= 0 {
+		limit = 25
+	}
+
+	rows, err := tx.Query(query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("could not query statuses: %v", err)
+	}
+	defer rows.Close()
+
+	var statuses []*Status = make([]*Status, 0, limit)
+	for rows.Next() {
+		var status Status
+		if err := rows.Scan(
+			&status.ID,
+			&status.Username,
+			&status.Warning,
+			&status.Content,
+			&status.Visibility,
+			&status.CreatedAt,
+			&status.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("could not scan status: %v", err)
+		}
+		statuses = append(statuses, &status)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error occurred while iterating over rows: %v", err)
+	}
+
+	// reverse
+	// slices.Reverse(statuses)
 
 	return statuses, nil
 }
