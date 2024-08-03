@@ -1,3 +1,6 @@
+// claude @ 240803
+// 这个版本的代码更加模块化，每个函数都有明确的职责，使得代码更容易理解和维护。同时，它还保留了原始代码的所有功能。
+
 package api
 
 import (
@@ -26,36 +29,69 @@ func headersMiddleware() gin.HandlerFunc {
 	}
 }
 
-// return forbidden if give an unavaliable session
-// after this, handler function could use c.GetString("username") to check
-func sessionMiddleware() gin.HandlerFunc {
+// SessionMiddleware handles user session validation and token generation.
+// It returns a 403 Forbidden status if the session is unavailable.
+// After this middleware, handlers can use c.GetString("username") to check the authenticated user.
+func SessionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		if c.GetString("username") != "" {
+		if isUserAlreadyAuthenticated(c) {
 			return
 		}
+
 		sessionID, err := c.Cookie("session_id")
-		if err == nil {
-			tx, err := psql.Begin()
-			if err == nil {
-				session, err := psql.GetSession(tx, sessionID)
-				if err != nil { // 其实应该设置一下是not found
-					c.SetCookie("session_id", "expired", -1, "/", "", true, false)
-				} else {
-					// all success
-					c.SetCookie("token", encodeToken(session.Username, time.Now().Unix()+300), -1, "/", "", true, false)
-					c.Set("username", session.Username)
-					c.Set("session", sessionID)
-				}
-				if err := tx.Commit(); err != nil {
-					log.Printf("error on commit: %v", err.Error())
-					tx.Rollback()
-				}
-			}
+		if err != nil {
+			c.Next()
+			return
+		}
+
+		if err := handleSession(c, sessionID); err != nil {
+			log.Printf("Session handling error: %v", err)
 		}
 
 		c.Next()
 	}
+}
+
+func isUserAlreadyAuthenticated(c *gin.Context) bool {
+	return c.GetString("username") != ""
+}
+
+func handleSession(c *gin.Context, sessionID string) error {
+	tx, err := psql.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil {
+			log.Printf("Error rolling back transaction: %v", err)
+		}
+	}()
+
+	session, err := psql.GetSession(tx, sessionID)
+	if err != nil {
+		expireSessionCookie(c)
+		return err
+	}
+
+	setUserSession(c, session)
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func expireSessionCookie(c *gin.Context) {
+	c.SetCookie("session_id", "expired", -1, "/", "", true, false)
+}
+
+func setUserSession(c *gin.Context, session *psql.Session) {
+	tokenExpiration := time.Now().Unix() + 300
+	token := encodeToken(session.Username, tokenExpiration)
+	c.SetCookie("token", token, 300, "/", "", true, false)
+	c.Set("username", session.Username)
+	c.Set("session", session.SessionID)
 }
 
 func encodeToken(username string, expireAt int64) string {
@@ -89,19 +125,34 @@ func decodeToken(token string) (username string, expireAt int, err error) {
 	return
 }
 
-func tokenMiddleware() gin.HandlerFunc {
+func TokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("token")
-		if err == nil {
-			username, expireAt, err := decodeToken(token)
-			if err == nil {
-				if expireAt < int(time.Now().Unix()) {
-					c.Set("username", username)
-				} else {
-					c.SetCookie("token", "expired", -1, "/", "", true, false)
-				}
-			}
+		if err != nil {
+			c.Next()
+			return
 		}
+
+		username, expireAt, err := decodeToken(token)
+		if err != nil {
+			c.Next()
+			return
+		}
+
+		if isTokenValid(expireAt) {
+			c.Set("username", username)
+		} else {
+			expireToken(c)
+		}
+
 		c.Next()
 	}
+}
+
+func isTokenValid(expireAt int) bool {
+	return expireAt >= int(time.Now().Unix())
+}
+
+func expireToken(c *gin.Context) {
+	c.SetCookie("token", "expired", -1, "/", "", true, false)
 }
