@@ -1,4 +1,5 @@
 // claude @ 240803
+
 // 这个版本的代码更加模块化，每个函数都有明确的职责，使得代码更容易理解和维护。同时，它还保留了原始代码的所有功能。
 
 package api
@@ -11,20 +12,26 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Hana-ame/neo-moonchan/Tools/header"
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
 )
 
+// headersMiddleware is a middleware function that extracts
+// specific headers from the request and sets them in the context.
 func headersMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		country := c.GetHeader("Cf-Ipcountry")
-		ipAddress := c.GetHeader("Cf-Connecting-Ip")
-		userAgent := c.GetHeader("User-Agent")
+		// Retrieve headers from the incoming request
+		country := c.GetHeader(header.CfCountry)
+		ipAddress := c.GetHeader(header.CfConnectingIP)
+		userAgent := c.GetHeader(header.UserAgent)
 
+		// Set the retrieved values in the context for later use
 		c.Set("country", country)
 		c.Set("ip", ipAddress)
 		c.Set("ua", userAgent)
 
+		// Proceed to the next middleware or handler
 		c.Next()
 	}
 }

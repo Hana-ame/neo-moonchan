@@ -24,9 +24,9 @@ func Connect(connStr string) *sql.DB {
 	// defer db.Close() // not today
 
 	// Set maximum open connections
-	db.SetMaxOpenConns(50)
+	db.SetMaxOpenConns(5)
 	// Set maximum idle connections
-	db.SetMaxIdleConns(25)
+	db.SetMaxIdleConns(2)
 	// Set maximum connection lifetime
 	db.SetConnMaxLifetime(time.Hour)
 

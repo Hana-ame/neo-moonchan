@@ -12,7 +12,6 @@ import (
 	"slices"
 	"time"
 
-	tools "github.com/Hana-ame/neo-moonchan/Tools"
 	"github.com/lib/pq"
 )
 
@@ -140,7 +139,7 @@ func GetStatusesByMaxID(tx *sql.Tx, maxID int64, limit int) ([]*Status, error) {
 	ORDER BY id DESC
 	LIMIT $2
 	`
-	limit = tools.Restrict(limit, 1, 25)
+	limit = intInterval(limit, 1, 25)
 	return queryStatuses(tx, query, maxID, limit)
 }
 
@@ -153,7 +152,7 @@ func GetStatusesByMinID(tx *sql.Tx, minID int64, limit int) ([]*Status, error) {
 	ORDER BY id ASC
 	LIMIT $2
 	`
-	limit = tools.Restrict(limit, 1, 25)
+	limit = intInterval(limit, 1, 25)
 	statuses, err := queryStatuses(tx, query, minID, limit)
 	if err != nil {
 		return statuses, err
@@ -170,7 +169,7 @@ func GetLatestStatuses(tx *sql.Tx, limit int) ([]*Status, error) {
 	ORDER BY id DESC
 	LIMIT $1
 	`
-	limit = tools.Restrict(limit, 1, 25)
+	limit = intInterval(limit, 1, 25)
 	return queryStatuses(tx, query, limit)
 }
 
