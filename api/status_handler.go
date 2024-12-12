@@ -182,7 +182,7 @@ func getUserStatuses(c *gin.Context) {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
-		statuses, err = psql.GetStatusesFromLinksMaxID(tx, maxID, username, limit)
+		statuses, err = psql.GetStatusesByUsernameFromLinksMaxID(tx, maxID, username, limit)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -194,14 +194,14 @@ func getUserStatuses(c *gin.Context) {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
-		statuses, err = psql.GetStatusesFromLinksMinID(tx, minID, username, limit)
+		statuses, err = psql.GetStatusesByUsernameFromLinksMinID(tx, minID, username, limit)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
 	default:
-		statuses, err = psql.GetStatusesFromLinks(tx, username, limit)
+		statuses, err = psql.GetLatestStatusesByUsernameFromLinks(tx, username, limit)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -211,8 +211,8 @@ func getUserStatuses(c *gin.Context) {
 	c.JSON(http.StatusOK, statuses)
 }
 
-// getStatusesByID retrieves statuses based on an ID range (min_id, max_id) or returns the latest statuses.
-func getStatusesByID(c *gin.Context) {
+// getStatuses retrieves statuses based on an ID range (min_id, max_id) or returns the latest statuses.
+func getStatuses(c *gin.Context) {
 	limitString := c.DefaultQuery("limit", "0")
 	limit, err := strconv.Atoi(limitString)
 	if err != nil {

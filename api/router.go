@@ -1,19 +1,18 @@
 package api
 
 import (
-	ToolsHandler "github.com/Hana-ame/neo-moonchan/Tools/gin_handler"
+	ToolsHandler "github.com/Hana-ame/neo-moonchan/Tools/handlerFunc"
 	"github.com/gin-gonic/gin"
 )
 
 func Main() error {
 	r := gin.Default()
 	// middlewares
-	// r.Use(ToolsHandler.CORSMiddleware("http://localhost:3000")) // 其实已经不用了
-	r.Use(tokenMiddleware()) // not tested.
+	r.Use(TokenMiddleware()) // not tested.
 	r.Use(headersMiddleware())
-	r.Use(sessionMiddleware())
+	r.Use(SessionMiddleware())
 	// echo for test
-	r.Any("/api/echo", ToolsHandler.Echo)
+	r.Any("/echo", ToolsHandler.Echo)
 	// login
 	apiv1 := r.Group("/api/v1")
 	{
@@ -21,18 +20,21 @@ func Main() error {
 		apiv1.POST("/register", register)
 		apiv1.POST("/login", login)
 		apiv1.POST("/logout", logout)
-		// sessions
-		apiv1.GET("/sessions", getSessions)
-		apiv1.DELETE("/sessions", deleteSessions)
-		apiv1.DELETE("/session/:id", deleteSession)
-		apiv1status := apiv1.Group("/status")
 		{
+			// sessions
+			apiv1sessions := apiv1.Group("/sessions")
+			apiv1sessions.GET("", getSessions)
+			apiv1sessions.DELETE("", deleteSessions)
+			apiv1sessions.DELETE("/:id", deleteSession)
+		}
+		{
+			apiv1status := apiv1.Group("/status")
 			apiv1status.POST("", createStatus)       // 创建状态
 			apiv1status.GET("/:id", getStatus)       // 获取单个状态
 			apiv1status.PUT("/:id", updateStatus)    // 更新状态
 			apiv1status.DELETE("/:id", deleteStatus) // 删除状态
 		}
-		apiv1.GET("/statuses", getStatusesByID)
+		apiv1.GET("/statuses", getStatuses)
 		apiv1.GET("/:username/statuses", getUserStatuses)
 	}
 

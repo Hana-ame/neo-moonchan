@@ -192,7 +192,7 @@ func TestGetStatusesFromLinksMaxID(t *testing.T) {
 	username := "user1"
 	limit := 5
 
-	statuses, err := GetStatusesFromLinksMaxID(tx, maxID, username, limit)
+	statuses, err := GetStatusesByUsernameFromLinksMaxID(tx, maxID, username, limit)
 	if err != nil {
 		t.Fatal("failed to get statuses:", err)
 		tx.Rollback()
@@ -220,7 +220,7 @@ func TestGetStatusesFromLinksMinID(t *testing.T) {
 	username := "user1"
 	limit := 5
 
-	statuses, err := GetStatusesFromLinksMinID(tx, minID, username, limit)
+	statuses, err := GetStatusesByUsernameFromLinksMinID(tx, minID, username, limit)
 	if err != nil {
 		t.Fatal("failed to get statuses:", err)
 		tx.Rollback()
