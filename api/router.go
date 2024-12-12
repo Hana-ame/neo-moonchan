@@ -1,7 +1,7 @@
 package api
 
 import (
-	ToolsHandler "github.com/Hana-ame/neo-moonchan/Tools/handlerFunc"
+	ToolsHandler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	"github.com/gin-gonic/gin"
 )
 
