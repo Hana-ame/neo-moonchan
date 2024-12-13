@@ -1,35 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
 	"os"
-	"time"
 
-	"github.com/Hana-ame/neo-moonchan/api"
-	"github.com/Hana-ame/neo-moonchan/psql"
+	// "github.com/Hana-ame/neo-moonchan/api"
+	// "github.com/Hana-ame/neo-moonchan/psql"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {
 	// connect to database
 	connStr := os.Getenv("DATABASE_URL")
-	psql.Connect(connStr)
-	// loop
-	for {
-		func() {
-			// atoshimatsu
-			defer func() {
-				e := recover()
-				if e != nil {
-					fmt.Println(e)
-				}
-			}()
 
-			err := api.Main()
-			fmt.Printf("%v", err)
-		}()
+	route := gin.Default()
 
-		time.Sleep(5 * time.Second)
-	}
+	route.Any("/api/echo", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, connStr)
+	})
+
+	route.Run("127.24.7.29:8080")
 }
