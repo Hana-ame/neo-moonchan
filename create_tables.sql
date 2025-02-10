@@ -3,12 +3,12 @@
 
 -- 创建 accounts 表
 CREATE TABLE accounts (
-    email VARCHAR(255) PRIMARY KEY,                -- 主键
-    username VARCHAR(50) UNIQUE NOT NULL,          -- 用户名，唯一且不允许为空
+    username VARCHAR(255) PRIMARY KEY,          -- 用户名，唯一且不允许为空
+    email VARCHAR(255) NOT NULL,                -- 邮箱只用来找回
     password_hash VARCHAR(255) NOT NULL,           -- 密码哈希，存储加密后的密码
 
-    country CHAR(2) NOT NULL,                      -- 国家代码
-    ip_address VARCHAR(45) NOT NULL,               -- IP 地址
+    country CHAR(255) NOT NULL,                      -- 国家代码
+    ip_address VARCHAR(255) NOT NULL,               -- IP 地址
 
     flag VARCHAR(255) NOT NULL DEFAULT 'created',                    -- 标志字段
     

@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
-	"github.com/Hana-ame/neo-moonchan/psql"
+	psql "github.com/Hana-ame/neo-moonchan/psql_old"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,7 +26,7 @@ func createStatus(c *gin.Context) {
 	}
 
 	// Extract data from the request
-	e, err := newExtractor(c)
+	e, err := tools.NewExtractor(c)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -98,7 +98,7 @@ func updateStatus(c *gin.Context) {
 	}
 
 	// Extract data from the request
-	e, err := newExtractor(c)
+	e, err := tools.NewExtractor(c)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

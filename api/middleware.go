@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Hana-ame/neo-moonchan/Tools/header"
-	"github.com/Hana-ame/neo-moonchan/psql"
+	psql "github.com/Hana-ame/neo-moonchan/psql_old"
 	"github.com/gin-gonic/gin"
 )
 

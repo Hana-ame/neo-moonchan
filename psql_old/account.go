@@ -52,14 +52,14 @@ func CreateAccount(tx *sql.Tx, email, username, passwordHash, country, ipAddress
 
 // GetAccount 根据电子邮件获取账户信息
 // 接受一个事务 tx 和电子邮件地址，返回对应的 Account 结构体
-func GetAccount(tx *sql.Tx, email string) (*Account, error) {
+func GetAccount(tx *sql.Tx, username string) (*Account, error) {
 	// 获取账户信息的 SQL 查询语句
 	query := `
 	SELECT email, username, password_hash, country, ip_address, flag, last_login, failed_attempts, created_at, updated_at
 	FROM accounts
-	WHERE email = $1
+	WHERE username = $1
 	`
-	row := tx.QueryRow(query, email)
+	row := tx.QueryRow(query, username)
 
 	var account Account
 	// 扫描数据库返回的结果并赋值给 Account 结构体

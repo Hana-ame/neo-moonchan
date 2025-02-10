@@ -3,21 +3,21 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	tools "github.com/Hana-ame/neo-moonchan/Tools"
 	"github.com/Hana-ame/neo-moonchan/Tools/randomreader"
-	"github.com/Hana-ame/neo-moonchan/psql"
+	psql "github.com/Hana-ame/neo-moonchan/psql_old"
 	"github.com/gin-gonic/gin"
 )
 
 // register 处理用户注册请求
 // 从请求中提取数据，创建用户账户和相关信息
 func register(c *gin.Context) {
-	e, err := newExtractor(c)
+	e, err := tools.NewExtractor(c)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -71,7 +71,7 @@ func register(c *gin.Context) {
 // login 处理用户登录请求
 // 验证用户凭据并创建会话
 func login(c *gin.Context) {
-	e, err := newExtractor(c)
+	e, err := tools.NewExtractor(c)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -246,41 +246,6 @@ func getSessions(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, sessions)
-}
-
-// newExtractor 初始化并返回一个 extractor 实例
-// 根据请求的 Content-Type 提取数据
-func newExtractor(c *gin.Context) (*extractor, error) {
-	extractor := &extractor{
-		cache: nil,
-		c:     c,
-	}
-
-	if c.ContentType() == "application/json" {
-		extractor.cache = make(map[string]string)
-		decoder := json.NewDecoder(c.Request.Body)
-		if err := decoder.Decode(&extractor.cache); err != nil {
-			return extractor, fmt.Errorf("error encoding body while application/json %v", err)
-		}
-	}
-
-	return extractor, nil
-}
-
-// extractor 是一个从请求中提取数据的工具
-type extractor struct {
-	cache map[string]string
-	c     *gin.Context
-}
-
-// Get 从 extractor 中获取指定键的值
-// 优先从缓存中获取，否则从 POST 表单中获取
-func (e *extractor) Get(key string) string {
-	if e.cache == nil {
-		return e.c.PostForm(key)
-	} else {
-		return e.cache[key]
-	}
 }
 
 // generateSessionID 生成一个随机的会话 ID
