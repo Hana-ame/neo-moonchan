@@ -40,7 +40,7 @@ func createStatus(c *gin.Context) {
 	defer tx.Rollback()
 
 	// Create status and link
-	timestamp := tools.Now()
+	timestamp := tools.NewTimeStamp()
 	if err := psql.CreateStatus(tx, timestamp, username, e.Get("warning"), e.Get("content"), e.Get("visibility")); err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
