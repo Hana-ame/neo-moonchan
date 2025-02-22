@@ -30,6 +30,7 @@ func main() {
 	route.GET("/api/message/:receiver", message.ReceiveMsg)
 
 	// files 250210
+	route.GET("/api/files/upload", file.File("upload.html"))
 	route.PUT("/api/files/upload", file.UploadFilePsql)
 	route.GET("/api/files/:id/:fn", file.DownloadFilePsql)
 
