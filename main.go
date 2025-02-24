@@ -8,11 +8,11 @@ import (
 	// "github.com/Hana-ame/neo-moonchan/api"
 	// "github.com/Hana-ame/neo-moonchan/psql_old"
 
-	file "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
-	message "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
+	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	middleware "github.com/Hana-ame/neo-moonchan/Tools/my_gin_middleware"
 	"github.com/Hana-ame/neo-moonchan/api/accounts"
 	"github.com/Hana-ame/neo-moonchan/api/inbox"
+	"github.com/Hana-ame/neo-moonchan/api/users"
 	"github.com/Hana-ame/neo-moonchan/api/webfinger"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -20,7 +20,9 @@ import (
 
 func main() {
 
-	// fs := &file.FileServer{Path: "/mnt/d/ytdl"}
+	// myfetch.DefaultClientPool = myfetch.NewClientPool([]*http.Client{myfetch.NewProxyClient(os.Getenv("HTTPS_PROXY"))}) // 没用啊。
+
+	// fs := &handler.FileServer{Path: "/mnt/d/ytdl"}
 
 	// connect to database
 	// connStr := os.Getenv("DATABASE_URL")
@@ -31,17 +33,18 @@ func main() {
 	api := route.Group("/api")
 
 	// message
-	api.PUT("/message/:receiver", message.SendMsg)
-	api.GET("/message/:receiver", message.ReceiveMsg)
+	api.PUT("/message/:receiver", handler.SendMsg)
+	api.GET("/message/:receiver", handler.ReceiveMsg)
 
 	// files 250210
-	api.GET("/files/upload", file.File("upload.html"))
-	api.PUT("/files/upload", file.UploadFilePsql)
-	api.GET("/files/:id/:fn", file.DownloadFilePsql)
+	api.GET("/files/upload", handler.File("upload.html"))
+	api.PUT("/files/upload", handler.UploadFilePsql)
+	api.GET("/files/:id/:fn", handler.DownloadFilePsql)
 
-	api.Any("/ping", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "pong")
+	api.GET("/ping", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, ctx.GetHeader("X-Forwarded-For"))
 	})
+	api.Any("/echo", handler.Echo)
 
 	// for static files
 	staticRoot := "/home/lumin/chat-room/build"
@@ -56,18 +59,18 @@ func main() {
 		"sw.js",
 	}
 	for _, path := range filelist {
-		route.GET("/"+path, file.File(filepath.Join(staticRoot, path)))
+		route.GET("/"+path, handler.File(filepath.Join(staticRoot, path)))
 	}
 	// route.GET("/static/*any", func(c *gin.Context) {
 	// 	path := filepath.Join(staticRoot, "static", (c.Param("any")))
-	// 	file.File(path)(c)
+	// 	handler.File(path)(c)
 	// })
 	// end // for static files
 
 	// 1. 配置静态文件服务（对应$uri检查）
 	route.Static("/static", staticRoot+"/static") // 前端构建产物目录
 
-	//
+	// TODO
 	{
 		group := api.Group("/chan")
 		group.POST("/accounts/register", accounts.Register)
@@ -78,7 +81,16 @@ func main() {
 	// activitypub
 	route.GET("/.well-known/webfinger", webfinger.Webfinger)
 
-	route.POST("/inbox", inbox.Inbox)
+	route.POST("/inbox", inbox.Inbox(true))
+	route.POST("/users/:username/inbox", inbox.Inbox(true))
+
+	route.GET("/users/:username", users.Users)
+	// mastodon 的这部分根本不支持，敢情只是抓个初态。
+	route.GET("/users/:username/outbox", users.Outbox)
+	route.GET("/users/:username/following", users.Following)
+	route.GET("/users/:username/followers", users.Followers)
+	route.GET("/users/:username/collections/featured", users.Featured)
+	route.GET("/users/:username/collections/tags", users.Tags)
 
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
@@ -86,5 +98,13 @@ func main() {
 		c.File(staticRoot + "/index.html")
 	})
 
+	// go func() {
+	// 	// 应该过了代理了，但是还是不能访问mstdn.jp的api
+	// 	// postman是没问题的。
+	// 	time.Sleep(1 * time.Second)
+	// 	r, _ := myfetch.Fetch("GET", "https://mstdn.jp/users/nanakananoka", nil, nil)
+	// 	b, _ := io.ReadAll(r.Body)
+	// 	fmt.Println(string(b), os.Getenv("HTTPS_PROXY"))
+	// }()
 	route.Run("127.24.7.29:8080")
 }

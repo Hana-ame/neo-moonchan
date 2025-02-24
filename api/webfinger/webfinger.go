@@ -1,12 +1,17 @@
+// 2025年2月24日
+
 package webfinger
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
+	"github.com/Hana-ame/neo-moonchan/Tools/db"
 	"github.com/Hana-ame/neo-moonchan/Tools/orderedmap"
+	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,27 +45,46 @@ func Webfinger(c *gin.Context) {
 	subject := c.Query("resource")
 	acct := tools.NewSlice(strings.Split(subject, ":")...).Last()
 	username := tools.NewSlice(strings.Split(acct, "@")...).FirstUnequal("")
+	host := tools.NewSlice(strings.Split(acct, "@")...).Last()
+	id := "https://" + host + "/users/" + username
+	err := db.Exec(func(tx *sql.Tx) error {
+		o, err := psql.ReadUser(tx, id)
+		if err != nil {
+			return err
+		}
+
+		if o.GetOrDefault("deleted", false).(bool) {
+			return fmt.Errorf("deleted")
+		}
+
+		return nil
+	})
+	if err != nil {
+		c.Header("X-Error", err.Error())
+		c.JSON(http.StatusNotFound, err)
+		return
+	}
 
 	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("subject", subject),
 		orderedmap.NewPair("aliases", tools.Slice[string]{
-			"https://" + os.Getenv("HOST") + "/@" + username,
-			"https://" + os.Getenv("HOST") + "/users/" + username,
+			"https://" + host + "/@" + username,
+			"https://" + host + "/users/" + username,
 		}),
 		orderedmap.NewPair("links", tools.Slice[*orderedmap.OrderedMap]{
 			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "http://webfinger.net/rel/profile-page"),
 				orderedmap.NewPair("type", "text/html"),
-				orderedmap.NewPair("href", "https://"+os.Getenv("HOST")+"/@"+username),
+				orderedmap.NewPair("href", "https://"+host+"/@"+username),
 			}),
 			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "self"),
 				orderedmap.NewPair("type", "application/activity+json"),
-				orderedmap.NewPair("href", "https://"+os.Getenv("HOST")+"/users/"+username),
+				orderedmap.NewPair("href", "https://"+host+"/users/"+username),
 			}),
 			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "http://ostatus.org/schema/1.0/subscribe"),
-				orderedmap.NewPair("template", "https://"+os.Getenv("HOST")+"/authorize_interaction?uri={uri}"),
+				orderedmap.NewPair("template", "https://"+host+"/authorize_interaction?uri={uri}"),
 			}),
 		}),
 	})
