@@ -179,4 +179,6 @@ func Block(actor, object string) error {
 	// return nil
 }
 
-func UndoFollow(id string) error
+func UndoFollow(id string) error {
+	return fmt.Errorf("wip")
+}

@@ -138,6 +138,7 @@ func handleDelete(o *orderedmap.OrderedMap, username, host string) error {
 }
 
 // 逻辑有问题的，在AP这边应该仅仅做一个记录
+// 不行，应该 还是需要做了
 // 确实需要解析一下json-ld, 有空写吧。
 func handleFollow(o *orderedmap.OrderedMap, username, host string) error {
 	err := db.Exec(func(tx *sql.Tx) error {
