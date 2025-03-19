@@ -1,0 +1,19 @@
+{
+    "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        "https://w3id.org/security/v1"
+    ],
+    "id": "https://mastodon.social/users/yaosese#delete",
+    "type": "Delete",
+    "actor": "https://mastodon.social/users/yaosese",
+    "to": [
+        "https://www.w3.org/ns/activitystreams#Public"
+    ],
+    "object": "https://mastodon.social/users/yaosese",
+    "signature": {
+        "type": "RsaSignature2017",
+        "creator": "https://mastodon.social/users/yaosese#main-key",
+        "created": "2025-02-24T11:38:34Z",
+        "signatureValue": "XeY520USOMnaLAjm8/crb8Ep4zr15KFs7MP7NmVzGJID+GeZoIJBwzlaA/FMcik7rRI8Z4186rZnPY6wqFBhRP9W50QdbT8MRYRSswL6c9EZsATYYjwBD5ZVqfrzLPez2PNZl9B/Ad1K7XktqUXGd0HdOMiGYTK0NdRgoYui5aEccNssZsLUMBfXpTcJaf3g8GZwJoERqpMt2RHva8+IOg9VevQk7t/PCbhrqISrbBXWdkV0bCUFBeboyQOPcTbUpN4SgiO9K+Bi6AQ2SdPPgTe97OESYTvPp1LMSz+R51CGmkA57PjpaLv4Zs4hwD4WXghO5+2zq5IFzeRgKvJAcA=="
+    }
+}

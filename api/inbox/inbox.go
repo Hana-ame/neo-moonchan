@@ -6,7 +6,6 @@ import (
 	"crypto"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -26,14 +25,16 @@ func Inbox(verify bool) func(c *gin.Context) {
 
 		b, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			log.Println(err)
+			// log.Println(err)
+			c.Header("X-Error", err.Error())
 			c.JSON(http.StatusBadRequest, err)
 			return
 		}
 
 		o := orderedmap.New()
 		if err := json.Unmarshal(b, &o); err != nil {
-			log.Println(err)
+			// log.Println(err)
+			c.Header("X-Error", err.Error())
 			c.JSON(http.StatusBadRequest, err)
 			return
 		}
@@ -47,11 +48,13 @@ func Inbox(verify bool) func(c *gin.Context) {
 		// log.Println(string(j)) // same
 
 		if verify {
+			// 处理 httpsig
 			err = tools.VerifyGin(c, b, retrieve)
 			if err != nil {
 				// delete 的时候无视找不到。
 				v, ok := tools.Extract[string](o, "type")
-				if ok == nil && v == "Delete" && errors.Is(err, tools.ErrKeyNotExists) {
+				// if ok == nil && v == "Delete" && errors.Is(err, tools.ErrKeyNotExists) { // 会有tombstone的
+				if ok == nil && v == "Delete" {
 					c.AbortWithStatus(http.StatusOK)
 					return
 				}
@@ -61,15 +64,15 @@ func Inbox(verify bool) func(c *gin.Context) {
 		}
 
 		// 处理，直接写这里好了。
-		fmt.Println(string(b), c.Param("username"), c.Request.Host)
-		// if err := handler.Inbox(o, name, host, err); err != nil {
-		// 	log.Println(err)
-		// 	c.JSON(http.StatusUnauthorized, err.Error())
-		// 	return
-		// }
+		// fmt.Println(string(b), c.Param("username"), c.Request.Host)
+		if err := handle(o, c.Param("username"), c.Request.Host); err != nil {
+			log.Println(err)
+			c.Header("X-Error", err.Error())
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
 
 		c.AbortWithStatus(http.StatusOK)
-		return
 	}
 }
 
@@ -99,4 +102,86 @@ func retrieve(id string) (publicKey crypto.PublicKey, err error) {
 		return tx.Commit()
 	})
 	return
+}
+
+func handle(o *orderedmap.OrderedMap, username, host string) error {
+	typ, err := tools.Extract[string](o, "type")
+	if err != nil {
+		return err
+	}
+	switch typ {
+	case "Follow":
+		err = handleFollow(o, username, host)
+	case "Block":
+		err = handleBlock(o, username, host)
+	case "Delete":
+		err = handleDelete(o, username, host)
+	default:
+		err = fmt.Errorf("not supported")
+	}
+	return err
+}
+
+// 确实需要解析一下json-ld, 有空写吧。
+func handleDelete(o *orderedmap.OrderedMap, username, host string) error {
+	// 目标
+	// object, err := tools.Extract[string](o, "object")
+	// if err != nil {
+	// 	return err
+	// }
+	// switch typ {
+	// case "Delete":
+	// }
+	// return err
+	// return fmt.Errorf("not supported")
+	return nil
+}
+
+// 逻辑有问题的，在AP这边应该仅仅做一个记录
+// 确实需要解析一下json-ld, 有空写吧。
+func handleFollow(o *orderedmap.OrderedMap, username, host string) error {
+	err := db.Exec(func(tx *sql.Tx) error {
+		id, err := tools.Extract[string](o, "id")
+		if err != nil {
+			return err
+		}
+		// actor, err := tools.Extract[string](o, "actor")
+		// if err != nil {
+		// 	return err
+		// }
+		// object, err := tools.Extract[string](o, "object")
+		// if err != nil {
+		// 	return err
+		// }
+		o.Set("status", "received")
+		err = psql.SaveActivity(tx, id, o)
+		if err != nil {
+			return err
+		}
+
+		// 检查是否blocked
+
+		return tx.Commit()
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 确实需要解析一下json-ld, 有空写吧。
+func handleBlock(o *orderedmap.OrderedMap, username, host string) error {
+	// 目标
+	// object, err := tools.Extract[string](o, "object")
+	// if err != nil {
+	// 	return err
+	// }
+	// switch typ {
+	// case "Delete":
+	// }
+	// return err
+	// return fmt.Errorf("not supported")
+	return nil
 }

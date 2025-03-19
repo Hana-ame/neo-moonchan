@@ -92,9 +92,12 @@ func main() {
 	route.GET("/users/:username/collections/featured", users.Featured)
 	route.GET("/users/:username/collections/tags", users.Tags)
 
+	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
+	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
+
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
-		log.Println(c.Request.URL.String()) // debug
+		log.Println(c.Request.URL.Path) // debug
 		c.File(staticRoot + "/index.html")
 	})
 

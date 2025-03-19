@@ -1,0 +1,61 @@
+{
+    "@context": [
+        "https://www.w3.org/ns/activitystreams",
+        {
+            "ostatus": "http://ostatus.org#",
+            "atomUri": "ostatus:atomUri",
+            "inReplyToAtomUri": "ostatus:inReplyToAtomUri",
+            "conversation": "ostatus:conversation",
+            "sensitive": "as:sensitive",
+            "toot": "http://joinmastodon.org/ns#",
+            "votersCount": "toot:votersCount"
+        }
+    ],
+    "id": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855/activity",
+    "type": "Create",
+    "actor": "https://mstdn.jp/users/nanakananoka",
+    "published": "2025-02-24T14:31:02Z",
+    "to": [
+        "https://fedi.moonchan.xyz/users/nanakananoka"
+    ],
+    "cc": [],
+    "object": {
+        "id": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855",
+        "type": "Note",
+        "summary": null,
+        "inReplyTo": null,
+        "published": "2025-02-24T14:31:02Z",
+        "url": "https://mstdn.jp/@nanakananoka/114059343442062855",
+        "attributedTo": "https://mstdn.jp/users/nanakananoka",
+        "to": [
+            "https://fedi.moonchan.xyz/users/nanakananoka"
+        ],
+        "cc": [],
+        "sensitive": false,
+        "atomUri": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855",
+        "inReplyToAtomUri": null,
+        "conversation": "tag:mstdn.jp,2025-02-24:objectId=592059555:objectType=Conversation",
+        "content": "<p><span class=\"h-card\"><a href=\"https://fedi.moonchan.xyz/@nanakananoka\" class=\"u-url mention\">@<span>nanakananoka@fedi.moonchan.xyz</span></a></span></p>",
+        "contentMap": {
+            "zh": "<p><span class=\"h-card\"><a href=\"https://fedi.moonchan.xyz/@nanakananoka\" class=\"u-url mention\">@<span>nanakananoka@fedi.moonchan.xyz</span></a></span></p>"
+        },
+        "attachment": [],
+        "tag": [
+            {
+                "type": "Mention",
+                "href": "https://fedi.moonchan.xyz/users/nanakananoka",
+                "name": "@nanakananoka@fedi.moonchan.xyz"
+            }
+        ],
+        "replies": {
+            "id": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855/replies",
+            "type": "Collection",
+            "first": {
+                "type": "CollectionPage",
+                "next": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855/replies?only_other_accounts=true&page=true",
+                "partOf": "https://mstdn.jp/users/nanakananoka/statuses/114059343442062855/replies",
+                "items": []
+            }
+        }
+    }
+}

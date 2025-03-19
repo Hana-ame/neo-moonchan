@@ -1,0 +1,12 @@
+{
+    "@context": "https://www.w3.org/ns/activitystreams",
+    "id": "https://mstdn.jp/users/nanakananoka#blocks/1347867/undo",
+    "type": "Undo",
+    "actor": "https://mstdn.jp/users/nanakananoka",
+    "object": {
+        "id": "https://mstdn.jp/1e0f99e6-7387-4179-b214-47774d9c5a67",
+        "type": "Block",
+        "actor": "https://mstdn.jp/users/nanakananoka",
+        "object": "https://fedi.moonchan.xyz/users/nanakananoka"
+    }
+}
