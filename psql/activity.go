@@ -26,6 +26,23 @@ func SaveActivity(tx *sql.Tx, id string, o *orderedmap.OrderedMap) error {
 
 	return nil
 }
+func CreateActivity(tx *sql.Tx, id string, o *orderedmap.OrderedMap) error {
+	content, err := json.Marshal(o)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(`
+        INSERT INTO activities (id, content)
+        VALUES ($1, $2::jsonb)
+        ON CONFLICT (id) DO NOTHING;
+    `, id, content)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func ReadActivity(tx *sql.Tx, id string) (*orderedmap.OrderedMap, error) {
 	var content []byte
@@ -59,8 +76,9 @@ func DeleteActivity(tx *sql.Tx, id string) error {
 	return nil
 }
 
+// nop
 // 根据 actor 和 object 查询符合条件的活动 ID 列表
-func QueryByMap(tx *sql.Tx, params map[string]string) ([]*orderedmap.OrderedMap, error) {
+func QueryActivitiesByMap(tx *sql.Tx, params map[string]string) ([]*orderedmap.OrderedMap, error) {
 	// 使用 JSONB 包含操作符 @> 进行高效查询
 	const query = `
         SELECT content 
@@ -105,6 +123,7 @@ func QueryByMap(tx *sql.Tx, params map[string]string) ([]*orderedmap.OrderedMap,
 	return objectArray, nil
 }
 
+// nop
 // not reviewed
 // 高级查询：带分页和状态过滤
 func QueryActivities(tx *sql.Tx, actor, object, status string, limit, offset int) ([]*orderedmap.OrderedMap, error) {

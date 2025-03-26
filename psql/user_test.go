@@ -127,8 +127,8 @@ func TestSaveUser(t *testing.T) {
 }
 
 func TestAddSaveUser(t *testing.T) {
-	fmt.Println("do not cache")
-	nanakananoka := "nanakananoka"
+	fmt.Println("do not cac111he")
+	nanakananoka := "nanakananoka2"
 
 	s := `
 	{

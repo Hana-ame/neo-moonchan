@@ -57,9 +57,10 @@ func Inbox(verify bool) func(c *gin.Context) {
 				if ok == nil && v == "Delete" {
 					c.AbortWithStatus(http.StatusOK)
 					return
+				} else {
+					c.String(http.StatusInternalServerError, err.Error())
+					return
 				}
-				c.JSON(http.StatusInternalServerError, err.Error())
-				return
 			}
 		}
 
@@ -104,6 +105,8 @@ func retrieve(id string) (publicKey crypto.PublicKey, err error) {
 	return
 }
 
+// TODO:
+// 目前只是存起来。不过说起来是不是需要更多处理之类的。根据处理结果更新内部关系
 func handle(o *orderedmap.OrderedMap, username, host string) error {
 	typ, err := tools.Extract[string](o, "type")
 	if err != nil {
@@ -116,6 +119,8 @@ func handle(o *orderedmap.OrderedMap, username, host string) error {
 		err = handleBlock(o, username, host)
 	case "Delete":
 		err = handleDelete(o, username, host)
+	case "Undo":
+		err = handleUndo(o, username, host)
 	default:
 		err = fmt.Errorf("not supported")
 	}
@@ -124,16 +129,23 @@ func handle(o *orderedmap.OrderedMap, username, host string) error {
 
 // 确实需要解析一下json-ld, 有空写吧。
 func handleDelete(o *orderedmap.OrderedMap, username, host string) error {
-	// 目标
-	// object, err := tools.Extract[string](o, "object")
-	// if err != nil {
-	// 	return err
-	// }
-	// switch typ {
-	// case "Delete":
-	// }
-	// return err
-	// return fmt.Errorf("not supported")
+	err := db.Exec(func(tx *sql.Tx) error {
+		id, err := tools.Extract[string](o, "id")
+		if err != nil {
+			return err
+		}
+		o.Set("status", "received")
+		err = psql.CreateActivity(tx, id, o)
+		if err != nil {
+			return err
+		}
+		return tx.Commit()
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -155,12 +167,12 @@ func handleFollow(o *orderedmap.OrderedMap, username, host string) error {
 		// 	return err
 		// }
 		o.Set("status", "received")
-		err = psql.SaveActivity(tx, id, o)
+		err = psql.CreateActivity(tx, id, o)
 		if err != nil {
 			return err
 		}
 
-		// 检查是否blocked
+		// 检查是否blocked，之后检查？
 
 		return tx.Commit()
 	})
@@ -174,15 +186,58 @@ func handleFollow(o *orderedmap.OrderedMap, username, host string) error {
 
 // 确实需要解析一下json-ld, 有空写吧。
 func handleBlock(o *orderedmap.OrderedMap, username, host string) error {
-	// 目标
-	// object, err := tools.Extract[string](o, "object")
-	// if err != nil {
-	// 	return err
-	// }
-	// switch typ {
-	// case "Delete":
-	// }
-	// return err
-	// return fmt.Errorf("not supported")
+	err := db.Exec(func(tx *sql.Tx) error {
+		id, err := tools.Extract[string](o, "id")
+		if err != nil {
+			return err
+		}
+		o.Set("status", "received")
+		err = psql.CreateActivity(tx, id, o)
+		if err != nil {
+			return err
+		}
+		return tx.Commit()
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// 确实需要解析一下json-ld, 有空写吧。
+func handleUndo(o *orderedmap.OrderedMap, username, host string) error {
+	err := db.Exec(func(tx *sql.Tx) error {
+		id, err := tools.Extract[string](o, "id")
+		if err != nil {
+			return err
+		}
+		// o.Set("status", "received")
+		err = psql.CreateActivity(tx, id, o)
+		if err != nil {
+			return err
+		}
+
+		objectID, err := tools.Extract[string](o, "object", "id")
+		if err != nil {
+			return err
+		}
+		object, err := psql.ReadActivity(tx, objectID)
+		if err != nil {
+			return err
+		}
+		object.Set("status", "undo")
+		err = psql.SaveActivity(tx, objectID, object)
+		if err != nil {
+			return err
+		}
+		return tx.Commit()
+	})
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
