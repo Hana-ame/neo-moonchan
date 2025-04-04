@@ -57,7 +57,7 @@ func main() {
 		"asset-manifest.json",
 		"favicon.ico",
 		"google5f29119424eae036.html",
-		"index.html",
+		// "index.html",
 		"logo192.png",
 		"manifest.json",
 		"robots.txt",
@@ -107,4 +107,5 @@ func main() {
 	})
 
 	route.Run("127.24.7.29:8080")
+	// ~/script/vps/ssh.sh -R 127.24.7.29:8080:127.24.7.29:8080
 }
