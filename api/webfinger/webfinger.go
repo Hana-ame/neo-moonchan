@@ -43,10 +43,11 @@ import (
 
 func Webfinger(c *gin.Context) {
 	subject := c.Query("resource")
-	acct := tools.NewSlice(strings.Split(subject, ":")...).Last()
+	acct := tools.NewSlice(strings.Split(subject, ":")...).Last().Result()
 	username := tools.NewSlice(strings.Split(acct, "@")...).FirstUnequal("")
-	host := tools.NewSlice(strings.Split(acct, "@")...).Last()
+	host := tools.NewSlice(strings.Split(acct, "@")...).Last().Result()
 	id := "https://" + host + "/users/" + username
+	// 这里是写死的，因为不会通过其他方式查询。
 	err := db.Exec(func(tx *sql.Tx) error {
 		o, err := psql.ReadUser(tx, id)
 		if err != nil {

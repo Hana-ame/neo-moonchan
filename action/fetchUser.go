@@ -16,7 +16,7 @@ import (
 // [@]user@domain.com
 // /.well-known/webfinger?resource=acct:nanakananoka@mstdn.jp
 func FetchWebfinger(acct string) (id string, err error) {
-	host := tools.NewSlice(strings.Split(acct, "@")...).Last()
+	host := tools.NewSlice(strings.Split(acct, "@")...).Last().Result()
 	username := tools.NewSlice(strings.Split(acct, "@")...).FirstUnequal("")
 	webfinger, err := myfetch.FetchJSON(http.MethodGet, "https://"+host+"/.well-known/webfinger?resource=acct:"+username+"@"+host, nil, nil)
 	if err != nil {

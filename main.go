@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -9,6 +8,7 @@ import (
 	// "github.com/Hana-ame/neo-moonchan/api"
 	// "github.com/Hana-ame/neo-moonchan/psql_old"
 
+	"github.com/Hana-ame/neo-moonchan/Tools/debug"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	middleware "github.com/Hana-ame/neo-moonchan/Tools/my_gin_middleware"
@@ -16,6 +16,7 @@ import (
 	"github.com/Hana-ame/neo-moonchan/api/inbox"
 	"github.com/Hana-ame/neo-moonchan/api/users"
 	"github.com/Hana-ame/neo-moonchan/api/webfinger"
+	"github.com/Hana-ame/neo-moonchan/register"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -45,11 +46,14 @@ func main() {
 	api.GET("/files/upload", handler.File("upload.html"))
 	api.PUT("/files/upload", handler.UploadFilePsql)
 	api.GET("/files/:id/:fn", handler.DownloadFilePsql)
+	api.GET("/files/list", handler.ListFilesPsql)
 
 	api.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, ctx.GetHeader("X-Forwarded-For"))
 	})
 	api.Any("/echo", handler.Echo)
+
+	api.POST("/register/by-mail", register.Register)
 
 	// for static files
 	staticRoot := "/home/lumin/chat-room/build"
@@ -75,7 +79,7 @@ func main() {
 	// 1. 配置静态文件服务（对应$uri检查）
 	route.Static("/static", staticRoot+"/static") // 前端构建产物目录
 
-	// TODO chan 自身的逻辑
+	// TODO chan 自身的逻辑 path = chan
 	{
 		group := api.Group("/chan")
 		group.POST("/accounts/register", accounts.Register)
@@ -90,6 +94,7 @@ func main() {
 	route.POST("/users/:username/inbox", inbox.Inbox(true))
 
 	route.GET("/users/:username", users.Users)
+
 	// mastodon 的这部分根本不支持，敢情只是抓个初态。
 	route.GET("/users/:username/outbox", users.Outbox)
 	route.GET("/users/:username/following", users.Following)
@@ -102,7 +107,7 @@ func main() {
 
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
-		log.Println(c.Request.URL.Path) // debug
+		debug.T("NoRouote", c.Request.URL.Path) // debug
 		c.File(staticRoot + "/index.html")
 	})
 
