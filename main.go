@@ -16,6 +16,7 @@ import (
 	"github.com/Hana-ame/neo-moonchan/api/inbox"
 	"github.com/Hana-ame/neo-moonchan/api/users"
 	"github.com/Hana-ame/neo-moonchan/api/webfinger"
+	"github.com/Hana-ame/neo-moonchan/ehentai"
 	"github.com/Hana-ame/neo-moonchan/register"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -55,13 +56,19 @@ func main() {
 
 	api.POST("/register/by-mail", register.Register)
 
+	route.GET("/archiver.php", ehentai.Archiver)
+	route.POST("/archiver.php", ehentai.Download)
+	route.HEAD("/archiver.php", ehentai.Archiver)
+	route.GET("/bounce_login.php", handler.File("bounce_login.html"))
+	route.POST("/bounce_login.php", ehentai.Login)
+
 	// for static files
-	staticRoot := "/home/lumin/chat-room/build"
+	staticRoot := os.Getenv("STATIC_ROOT")
 	filelist := []string{
 		"asset-manifest.json",
 		"favicon.ico",
 		"google5f29119424eae036.html",
-		// "index.html",
+		"index.html",
 		"logo192.png",
 		"manifest.json",
 		"robots.txt",
@@ -84,6 +91,7 @@ func main() {
 		group := api.Group("/chan")
 		group.POST("/accounts/register", accounts.Register)
 		group.POST("/accounts/login", accounts.Login)
+		group.POST("/accounts/google/login", accounts.Login)
 		group.POST("/accounts/update", accounts.Update)
 	}
 
@@ -111,6 +119,6 @@ func main() {
 		c.File(staticRoot + "/index.html")
 	})
 
-	route.Run("127.24.7.29:8080")
+	route.Run(os.Getenv("LISTEN_ADDR")) // listen and serve on
 	// ~/script/vps/ssh.sh -R 127.24.7.29:8080:127.24.7.29:8080
 }

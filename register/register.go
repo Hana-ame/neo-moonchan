@@ -29,11 +29,11 @@ func Register(c *gin.Context) {
 
 	if err := db.Exec(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`
-		INSERT INTO accounts (email, password) 
-		VALUES ($1, $2)
+		INSERT INTO accounts (email, password, ehentai) 
+		VALUES ($1, $2, $3::jsonb)
 		ON CONFLICT (email) 
 		DO UPDATE SET password = EXCLUDED.password;`,
-			email, password); err != nil {
+			email, password, []byte(`{"ip":"`+c.GetHeader("X-Forwarded-For")+`"}`)); err != nil {
 			return err
 		}
 

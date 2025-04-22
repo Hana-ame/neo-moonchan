@@ -1,0 +1,13 @@
+[Unit]
+Description=neo-moonchan
+After=network.target
+Requires=network.target
+
+[Service]
+ExecStart=/home/lumin/neo-moonchan/neo-moonchan
+WorkingDirectory=/home/lumin/neo-moonchan
+Restart=always
+User=lumin
+
+[Install]
+WantedBy=multi-user.target
