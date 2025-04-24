@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -98,8 +97,8 @@ func Download(c *gin.Context) {
 	}
 
 	// TODO
-	if o.GetOrDefault("gp", float64(0)).(float64) < -50000 {
-		c.String(http.StatusForbidden, "试运行，你用太多了，有需要来岛上发帖给你打额度。也别注册多个mail看到肯定封的。")
+	if o.GetOrDefault("gp", float64(0)).(float64)+o.GetOrDefault("limit", float64(0)).(float64) < 0 {
+		c.String(http.StatusForbidden, "试运行，你用太多了，有需要来岛上发帖给你打额度。也别注册多个mail看到肯定封的。\n接受打贡献，打SP，打Credit充值")
 		return
 	}
 
@@ -153,6 +152,16 @@ func Download(c *gin.Context) {
 
 // route.GET("/archiver.php", ehentai.Archiver)
 func Archiver(c *gin.Context) {
+	_, err := c.Cookie("passkey")
+	if err != nil {
+		c.Redirect(http.StatusFound, "/bounce_login.php?gid="+c.Query("gid")+"&token="+c.Query("token"))
+		return
+	}
+
+	if http.MethodGet == c.Request.Method {
+		handler.File("archiver.html")(c)
+		return
+	}
 
 	gid := c.Query("gid")
 	token := c.Query("token")
@@ -163,7 +172,7 @@ func Archiver(c *gin.Context) {
 
 	ehentai, err := helper(c)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/bounce_login.php?r="+url.QueryEscape(c.Request.URL.String()))
+		c.Redirect(http.StatusFound, "/bounce_login.php?gid="+c.Query("gid")+"&token="+c.Query("token"))
 		return
 	}
 	o := orderedmap.New()
@@ -180,10 +189,12 @@ func Archiver(c *gin.Context) {
 	gp := o.GetOrDefault("gp", f64_0).(float64)
 	credit := o.GetOrDefault("credit", f64_0).(float64)
 	hath := o.GetOrDefault("hath", f64_0).(float64)
+	limit := o.GetOrDefault("limit", f64_0).(float64)
 
 	c.Header("X-Gp", strconv.Itoa(int(gp)))
 	c.Header("X-Credit", strconv.Itoa(int(credit)))
 	c.Header("X-Hath", strconv.Itoa(int(hath)))
+	c.Header("X-Limit", strconv.Itoa(int(limit)))
 
 	cost, err := getCost(c)
 	if err != nil {
@@ -192,10 +203,10 @@ func Archiver(c *gin.Context) {
 	}
 
 	c.Header("X-Cost", strconv.Itoa(cost))
-	c.Header("Access-Control-Expose-Headers", "X-Gp, X-Credit, X-Hath, X-Cost")
+	c.Header("Access-Control-Expose-Headers", "X-Gp, X-Credit, X-Hath, X-Cost, X-Limit")
 	c.Header("Access-Control-Allow-Origin", "*") // 或指定域名
 
-	handler.File("archiver.html")(c)
+	c.AbortWithStatus(http.StatusOK)
 }
 
 // route.POST("/bounce_login.php", ehentai.Login)
@@ -225,15 +236,16 @@ func Login(c *gin.Context) {
 	if err != nil {
 		log.Println("Error checking password:", err)
 		c.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
-	location := c.Query("r")
+	gid := c.Query("gid")
 	token := c.Query("token")
-	if location == "" {
-		location = "https://ex.moonchan.xyz/"
+	if gid == "" || token == "" {
+		c.Redirect(http.StatusFound, "https://ex.moonchan.xyz/")
 	}
 
 	c.SetCookie("email", email, 3600*24*365*10, "/", "", false, false)
 	c.SetCookie("passkey", tools.Hash(email, password), 3600*24*365*10, "/", "", false, false)
 
-	c.Redirect(http.StatusFound, location+"&token="+token)
+	c.Redirect(http.StatusFound, "/archiver.php?gid="+gid+"&token="+token+"")
 }

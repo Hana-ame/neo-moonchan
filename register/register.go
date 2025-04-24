@@ -33,7 +33,7 @@ func Register(c *gin.Context) {
 		VALUES ($1, $2, $3::jsonb)
 		ON CONFLICT (email) 
 		DO UPDATE SET password = EXCLUDED.password;`,
-			email, password, []byte(`{"ip":"`+c.GetHeader("X-Forwarded-For")+`"}`)); err != nil {
+			email, password, []byte(`{"ip":"`+c.GetHeader("X-Forwarded-For")+`","limit":20000}`)); err != nil {
 			return err
 		}
 

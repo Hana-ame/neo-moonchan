@@ -81,6 +81,7 @@
     <div class="dashboard-container">
             
         <!-- 头部信息展示区 -->
+        <div class="info-card" id="limitInfo">限额：加载中...</div>
         <div class="info-card" id="gpInfo">当前GP值：加载中...</div>
         <div class="info-card" id="creditInfo">credit：加载中...</div>
         <div class="info-card" id="hathInfo">Hath值：加载中...</div>
@@ -100,9 +101,12 @@
         // 动态获取头部信息 [1,5](@ref)
         function updateHeaders() {
             fetch(window.location.href, {
-                method: 'GET',
-                credentials: 'same-origin'
+                method: 'HEAD',
+                credentials: 'same-origin',
+                cache: 'no-store',
             }).then(response => {
+                document.getElementById('limitInfo').textContent = 
+                    `限额：${response.headers.get('X-Limit') || 'N/A'}`;
                 document.getElementById('gpInfo').textContent = 
                     `当前GP值：${response.headers.get('X-Gp') || 'N/A'}`;
                 document.getElementById('creditInfo').textContent = 
@@ -111,6 +115,10 @@
                     `Hath值：${response.headers.get('X-Hath') || 'N/A'}`;
                 document.getElementById('costInfo').textContent = 
                     `消耗GP：${response.headers.get('X-Cost') || 'N/A'}`;
+
+                if (response.headers.get('X-Limit') === "") {
+                    window.location.href = "/bounce_login.php?token=" + token + "&gid=" + gid;
+                }
             });
         }
 

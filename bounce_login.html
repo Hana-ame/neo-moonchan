@@ -55,15 +55,15 @@
         <script>
             // 自动捕获当前页面URL作为r参数
             const urlParams = new URLSearchParams(window.location.search);
-            const rParam = urlParams.get('r'); // 直接获取r参数
-            const decodedR = decodeURIComponent(rParam || ''); // 解码参数
+            const token = urlParams.get('token'); // 直接获取r参数
+            const gid = urlParams.get('gid'); // 直接获取r参数
 
             document.getElementById('loginForm').action = 
-                '/bounce_login.php?r=' + decodedR;
+                '/bounce_login.php?token=' + token + '&gid=' + gid;
         </script>
 
         <button type="submit">登录</button>
     </form>
-    注册方式：发送邮件到register@moonchan.xyz，编辑subject/标题作为密码，发送后等待一分钟处理
+    注册方式：发送邮件到register@moonchan.xyz，编辑subject/标题作为密码，发送后等待一分钟。
 </body>
-</html>
+</html>     
