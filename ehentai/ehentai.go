@@ -96,15 +96,14 @@ func Download(c *gin.Context) {
 		return
 	}
 
-	// TODO
-	if o.GetOrDefault("gp", float64(0)).(float64)+o.GetOrDefault("limit", float64(0)).(float64) < 0 {
-		c.String(http.StatusForbidden, "试运行，你用太多了，有需要来岛上发帖给你打额度。也别注册多个mail看到肯定封的。\n接受打贡献，打SP，打Credit充值")
-		return
-	}
-
 	cost, err := getCost(c)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if cost > 0 && o.GetOrDefault("gp", float64(0)).(float64)+o.GetOrDefault("limit", float64(0)).(float64) < 0 {
+		c.String(http.StatusForbidden, "limit: %.0f < gp: %.0f", o.GetOrDefault("limit", float64(0)).(float64), o.GetOrDefault("gp", float64(0)).(float64))
 		return
 	}
 
@@ -235,7 +234,7 @@ func Login(c *gin.Context) {
 	})
 	if err != nil {
 		log.Println("Error checking password:", err)
-		c.AbortWithError(http.StatusInternalServerError, err)
+		// c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	gid := c.Query("gid")

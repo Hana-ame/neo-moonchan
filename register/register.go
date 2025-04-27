@@ -32,7 +32,15 @@ func Register(c *gin.Context) {
 		INSERT INTO accounts (email, password, ehentai) 
 		VALUES ($1, $2, $3::jsonb)
 		ON CONFLICT (email) 
-		DO UPDATE SET password = EXCLUDED.password;`,
+		DO UPDATE SET 
+		password = EXCLUDED.password, 
+		ehentai = jsonb_set(
+			COALESCE(accounts.ehentai, '{}'::jsonb),
+			'{limit}',
+			to_jsonb(COALESCE((accounts.ehentai->>'limit')::integer, 0) + 20000),
+			true
+		)
+		;`,
 			email, password, []byte(`{"ip":"`+c.GetHeader("X-Forwarded-For")+`","limit":20000}`)); err != nil {
 			return err
 		}

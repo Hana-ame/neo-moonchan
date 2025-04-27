@@ -44,23 +44,29 @@ func main() {
 	api.GET("/message/:receiver", handler.ReceiveMsg)
 
 	// files 250210
-	api.GET("/files/upload", handler.File("upload.html"))
-	api.PUT("/files/upload", handler.UploadFilePsql)
-	api.GET("/files/:id/:fn", handler.DownloadFilePsql)
-	api.GET("/files/list", handler.ListFilesPsql)
+	{
+		api.GET("/files/upload", handler.File("upload.html"))
+		api.PUT("/files/upload", handler.UploadFilePsql)
+		api.GET("/files/:id/:fn", handler.DownloadFilePsql)
+		api.GET("/files/list", handler.ListFilesPsql)
+	} // files 250210
 
 	api.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, ctx.GetHeader("X-Forwarded-For"))
 	})
 	api.Any("/echo", handler.Echo)
 
-	api.POST("/register/by-mail", register.Register)
+	{
+		// ehentai
+		api.POST("/register/by-mail", register.Register)
 
-	route.GET("/archiver.php", ehentai.Archiver)
-	route.POST("/archiver.php", ehentai.Download)
-	route.HEAD("/archiver.php", ehentai.Archiver)
-	route.GET("/bounce_login.php", handler.File("bounce_login.html"))
-	route.POST("/bounce_login.php", ehentai.Login)
+		// ehentai
+		route.GET("/archiver.php", ehentai.Archiver)
+		route.POST("/archiver.php", ehentai.Download)
+		route.HEAD("/archiver.php", ehentai.Archiver)
+		route.GET("/bounce_login.php", handler.File("bounce_login.html"))
+		route.POST("/bounce_login.php", ehentai.Login)
+	} // ehentai
 
 	// for static files
 	staticRoot := os.Getenv("STATIC_ROOT")
