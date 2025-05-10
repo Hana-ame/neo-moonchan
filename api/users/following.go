@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 已经固定初值
 func Following(c *gin.Context) {
 	host := c.Request.Host
 	username := c.Param("username")

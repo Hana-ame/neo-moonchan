@@ -49,7 +49,24 @@
         // 定义固定下载路径
         const DOWNLOAD_BASE = 'https://chat.moonchan.xyz/api/files/';
         // 定义上传端点
-        const UPLOAD_ENDPOINT = 'https://wsl.moonchan.xyz/api/files/upload';
+        // const UPLOAD_ENDPOINT = 'https://wsl.moonchan.xyz/api/files/upload';
+
+        // 解析当前 URL 的查询参数
+        const getUrlParam = (param) => {
+          const urlParams = new URLSearchParams(window.location.search);
+          return urlParams.get(param);
+        };
+
+        // 根据 upload 参数动态返回上传端点
+        const UPLOAD_ENDPOINT = (() => {
+          const uploadType = getUrlParam('upload') || 'wsl'; // 默认 wsl
+          const baseUrl = 'https://wsl.moonchan.xyz/api/files/upload';
+          
+          if (uploadType === 'chat') {
+            return baseUrl.replace('wsl', 'chat');
+          } 
+          return baseUrl; // 默认 wsl
+        })();
 
         function handleFile(file){      
           if (file){ 

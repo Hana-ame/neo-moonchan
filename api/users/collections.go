@@ -10,6 +10,7 @@ import (
 )
 
 // 顶置
+// 已经固定初值
 //
 //	{
 //	    "@context": [
@@ -71,6 +72,7 @@ func Featured(c *gin.Context) {
 }
 
 // 不知道是什么
+// 已经固定初值
 //
 //	{
 //	    "@context": "https://www.w3.org/ns/activitystreams",
@@ -96,6 +98,7 @@ func Devices(c *gin.Context) {
 }
 
 // 好像是主页的tag，不是很常用吧。
+// 已经固定初值
 //
 //	{
 //	    "@context": "https://www.w3.org/ns/activitystreams",

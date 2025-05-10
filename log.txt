@@ -1272,3 +1272,10 @@ https://wxw.moe/users/HaruUrara
 https://wxw.moe/users/fishrotten
 https://wxw.moe/users/neobridgeBC
 https://wxw.moe/users/sjyoyventan
+
+https://wxw.moe/users/megane
+https://wxw.moe/users/arkaphonic
+https://wxw.moe/users/youshiadokk
+
+2025/05/08 05:05:58 {"@context":"https://www.w3.org/ns/activitystreams","id":"https://mstdn.jp/35f8f336-9973-4461-a78d-7aa444b1a66e","type":"Follow","actor":"https://mstdn.jp/users/pose","object":"https://mstdn.work.gd/users/nanakananoka2"}
+2025/05/08 05:05:58 {"Accept-Encoding":["gzip"],"Connection":["close"],"Content-Length":["220"],"Content-Type":["application/activity+json"],"Date":["Wed, 07 May 2025 21:05:57 GMT"],"Digest":["SHA-256=NzHBdjF8tWK0y0XjBkyPH9/NSagXcmDQT4upAFazkds="],"Signature":["keyId=\"https://mstdn.jp/users/pose#main-key\",algorithm=\"rsa-sha256\",headers=\"(request-target) host date digest content-type\",signature=\"NnPP0CWpl7oHFeEgR0QGo0LmlyV2zdMMobyk+B+bRWwOtQl2twaIEQ6PVIuUECfdJhecNhfkHkzI8b6pIkiksBBZMcllEmh23xbLeolgCWSXEQhiI9bDK84jGezzCKjoh6ZcchOFmdd+ARIeL81i7zk1cG5Nc6e0cXdwPVLJ1HPzlAMnDQCSVMtbxYMWnKIGoR0KS2KbX+1h/puivFb5R2xQ/rPC8gUFn1D98guszNxkZe1lW60d8D20n3UblRZqX2UmABysKyofRXqk4cYODXie5lKEyhFTVlfRRSup3hJ+QL2+iYvIFYboUPGkYCMbzJr7XzDqDCpffPYerGNAew==\""],"User-Agent":["http.rb/5.1.1 (Mastodon/4.1.20; +https://mstdn.jp/)"]}

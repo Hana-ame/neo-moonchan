@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -165,19 +164,25 @@ func Archiver(c *gin.Context) {
 	gid := c.Query("gid")
 	token := c.Query("token")
 	if gid == "" || token == "" {
-		c.String(http.StatusBadRequest, "gid or token is empty")
+		// c.String(http.StatusBadRequest, "gid or token is empty")
+		c.Header("X-Error", "gid or token is empty")
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	ehentai, err := helper(c)
 	if err != nil {
-		c.Redirect(http.StatusFound, "/bounce_login.php?gid="+c.Query("gid")+"&token="+c.Query("token"))
+		// c.Redirect(http.StatusFound, "/bounce_login.php?gid="+c.Query("gid")+"&token="+c.Query("token"))
+		c.Header("X-Error", err.Error())
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	o := orderedmap.New()
 	err = json.Unmarshal(ehentai, &o)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "error")
+		// c.String(http.StatusInternalServerError, "error")
+		c.Header("X-Error", err.Error())
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -197,7 +202,9 @@ func Archiver(c *gin.Context) {
 
 	cost, err := getCost(c)
 	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+		// c.String(http.StatusInternalServerError, err.Error())
+		c.Header("X-Error", err.Error())
+		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
@@ -224,16 +231,18 @@ func Login(c *gin.Context) {
 		var pw string
 		err := tx.QueryRow("SELECT password FROM accounts WHERE email = $1", email).Scan(&pw)
 		if err != nil {
-			c.String(http.StatusUnauthorized, "Invalid email")
-			return err
+			// c.String(http.StatusUnauthorized, "Invalid email")
+			return fmt.Errorf("invalid email")
 		}
 		if pw != password {
-			c.String(http.StatusUnauthorized, "wrong password")
+			// c.String(http.StatusUnauthorized, "wrong password")
+			return fmt.Errorf("wrong password")
 		}
 		return tx.Commit()
 	})
 	if err != nil {
-		log.Println("Error checking password:", err)
+		// log.Println("Error checking password:", err)
+		c.String(http.StatusUnauthorized, err.Error())
 		// c.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -241,6 +250,7 @@ func Login(c *gin.Context) {
 	token := c.Query("token")
 	if gid == "" || token == "" {
 		c.Redirect(http.StatusFound, "https://ex.moonchan.xyz/")
+		return
 	}
 
 	c.SetCookie("email", email, 3600*24*365*10, "/", "", false, false)

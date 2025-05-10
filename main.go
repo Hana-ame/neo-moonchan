@@ -8,7 +8,8 @@ import (
 	// "github.com/Hana-ame/neo-moonchan/api"
 	// "github.com/Hana-ame/neo-moonchan/psql_old"
 
-	"github.com/Hana-ame/neo-moonchan/Tools/debug"
+	tools "github.com/Hana-ame/neo-moonchan/Tools"
+	"github.com/Hana-ame/neo-moonchan/Tools/liblib"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	middleware "github.com/Hana-ame/neo-moonchan/Tools/my_gin_middleware"
@@ -17,6 +18,7 @@ import (
 	"github.com/Hana-ame/neo-moonchan/api/users"
 	"github.com/Hana-ame/neo-moonchan/api/webfinger"
 	"github.com/Hana-ame/neo-moonchan/ehentai"
+	"github.com/Hana-ame/neo-moonchan/nft"
 	"github.com/Hana-ame/neo-moonchan/register"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -37,6 +39,17 @@ func main() {
 	route.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	route.Use(middleware.CORSMiddleware())
+
+	{
+		dapp := route.Group("/dapp")
+		dapp.GET("/debug", nft.DebugInfo)
+		dapp.GET("/cov/2edge", nft.Conv2Edge)
+
+		dapp.POST("/generate/webui/img2img/ultra", liblib.Img2Img)
+		dapp.POST("/generate/webui/text2img/ultra", liblib.Text2Img)
+		dapp.POST("/generate/webui/status", liblib.GetStatus)
+	}
+
 	api := route.Group("/api")
 
 	// message
@@ -44,7 +57,7 @@ func main() {
 	api.GET("/message/:receiver", handler.ReceiveMsg)
 
 	// files 250210
-	{
+	if tools.HasEnv("UPLOAD_PATH") {
 		api.GET("/files/upload", handler.File("upload.html"))
 		api.PUT("/files/upload", handler.UploadFilePsql)
 		api.GET("/files/:id/:fn", handler.DownloadFilePsql)
@@ -56,8 +69,8 @@ func main() {
 	})
 	api.Any("/echo", handler.Echo)
 
-	{
-		// ehentai
+	// ehentai
+	if tools.HasEnv("EX_COOKIE") {
 		api.POST("/register/by-mail", register.Register)
 
 		// ehentai
@@ -66,23 +79,24 @@ func main() {
 		route.HEAD("/archiver.php", ehentai.Archiver)
 		route.GET("/bounce_login.php", handler.File("bounce_login.html"))
 		route.POST("/bounce_login.php", ehentai.Login)
+		route.HEAD("/bounce_login.php", handler.File("bounce_login.html"))
 	} // ehentai
 
 	// for static files
-	staticRoot := os.Getenv("STATIC_ROOT")
-	filelist := []string{
-		"asset-manifest.json",
-		"favicon.ico",
-		"google5f29119424eae036.html",
-		"index.html",
-		"logo192.png",
-		"manifest.json",
-		"robots.txt",
-		"sw.js",
-	}
-	for _, path := range filelist {
-		route.GET("/"+path, handler.File(filepath.Join(staticRoot, path)))
-	}
+	// staticRoot := os.Getenv("STATIC_ROOT")
+	// filelist := []string{
+	// 	"asset-manifest.json",
+	// 	"favicon.ico",
+	// 	"google5f29119424eae036.html",
+	// 	"index.html",
+	// 	"logo192.png",
+	// 	"manifest.json",
+	// 	"robots.txt",
+	// 	"sw.js",
+	// }
+	// for _, path := range filelist {
+	// 	route.GET("/"+path, handler.File(filepath.Join(staticRoot, path)))
+	// }
 	// route.GET("/static/*any", func(c *gin.Context) {
 	// 	path := filepath.Join(staticRoot, "static", (c.Param("any")))
 	// 	handler.File(path)(c)
@@ -90,7 +104,7 @@ func main() {
 	// end // for static files
 
 	// 1. 配置静态文件服务（对应$uri检查）
-	route.Static("/static", staticRoot+"/static") // 前端构建产物目录
+	// route.Static("/static", staticRoot+"/static") // 前端构建产物目录
 
 	// TODO chan 自身的逻辑 path = chan
 	{
@@ -119,10 +133,28 @@ func main() {
 	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
 	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
 
+	route.GET("/favicon.png", handler.RedirectTo(http.StatusTemporaryRedirect, "/favicon.ico"))
+
+	staticRoot := os.Getenv("STATIC_ROOT")
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
-		debug.T("NoRouote", c.Request.URL.Path) // debug
-		c.File(staticRoot + "/index.html")
+		c.File("o.html")
+		return
+		// 获取请求路径（如 "/asset-manifest.json"）
+		requestedPath := c.Request.URL.Path
+		// 拼接完整文件路径
+		filePath := filepath.Join(staticRoot, requestedPath)
+
+		// 1. 检查文件是否存在且是普通文件（非目录）
+		fileInfo, err := os.Stat(filePath)
+		if err == nil && !fileInfo.IsDir() {
+			// 文件存在且非目录，直接返回文件内容
+			c.File(filePath)
+			return
+		}
+
+		// 2. 若文件不存在或路径是目录，返回index.html
+		c.File(filepath.Join(staticRoot, "index.html"))
 	})
 
 	route.Run(os.Getenv("LISTEN_ADDR")) // listen and serve on
