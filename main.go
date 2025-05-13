@@ -48,6 +48,33 @@ func main() {
 		dapp.POST("/generate/webui/img2img/ultra", liblib.Img2Img)
 		dapp.POST("/generate/webui/text2img/ultra", liblib.Text2Img)
 		dapp.POST("/generate/webui/status", liblib.GetStatus)
+
+		// user object
+		dapp.POST("/register", nft.Register)
+		dapp.POST("/login", nft.Login)
+		dapp.GET("/user/:username", nft.GetUserProfile)
+		dapp.PATCH("/user/:username", nft.SetUserProfile)
+		// post object
+		dapp.POST("/post/create", nft.CreatePost)
+
+		dapp.GET("/post/:id", nft.GetPost)
+		dapp.PATCH("/post/:id", nft.CreatePost)
+
+		dapp.GET("post/:id/owner", nft.GetOwnerOfPost)
+		dapp.POST("post/:id/owner", nft.ChangeOwnerOfPost)
+		dapp.PATCH("post/:id/owner", nft.PatchOwnerOfPost)
+
+		dapp.GET("/user/:username/posts", nft.GetPostsByUsername)
+		dapp.GET("/user/:username/owned", nft.GetPostsByOwnershipWithJoin)
+
+		// comment object
+		dapp.GET("/post/:id/comment")
+		dapp.POST("/post/:id/comment")
+
+		// catagory
+		dapp.GET("/explore", nft.GetNewPosts)
+		dapp.GET("/explore/:tag", nft.GetPostsByTagWithJoin)
+		dapp.GET("/collection/:id", nft.GetPostsByOwnershipWithJoin)
 	}
 
 	api := route.Group("/api")
