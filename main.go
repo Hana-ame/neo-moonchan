@@ -40,7 +40,8 @@ func main() {
 
 	route.Use(middleware.CORSMiddleware())
 
-	{
+	// no longer needed
+	if tools.HasEnv("DAPP") {
 		dapp := route.Group("/dapp")
 		dapp.GET("/debug", nft.DebugInfo)
 		dapp.GET("/cov/2edge", nft.Conv2Edge)
@@ -165,6 +166,7 @@ func main() {
 	staticRoot := os.Getenv("STATIC_ROOT")
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
+		// debug
 		c.File("o.html")
 		return
 		// 获取请求路径（如 "/asset-manifest.json"）
