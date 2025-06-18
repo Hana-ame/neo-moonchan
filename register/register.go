@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	"strings"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
 	"github.com/Hana-ame/neo-moonchan/Tools/db"
@@ -23,6 +24,14 @@ func Register(c *gin.Context) {
 	}
 
 	email := o.GetOrDefault("from", "").(string)
+	for _, suffix := range []string{
+		// "protonmail.com",
+	} {
+		if strings.HasSuffix(email, suffix) {
+			c.AbortWithStatus(http.StatusForbidden)
+			return
+		}
+	}
 	password := tools.Hash(o.GetOrDefault("subject", "").(string), os.Getenv("SALT"))
 
 	// id := tools.NewTimeStamp()
@@ -30,14 +39,19 @@ func Register(c *gin.Context) {
 	if err := db.Exec(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`
 		INSERT INTO accounts (email, password, ehentai) 
-		VALUES ($1, $2, $3::jsonb)
+		VALUES (LOWER($1), $2, $3::jsonb)
 		ON CONFLICT (email) 
 		DO UPDATE SET 
 		password = EXCLUDED.password, 
 		ehentai = jsonb_set(
 			COALESCE(accounts.ehentai, '{}'::jsonb),
 			'{limit}',
-			to_jsonb(COALESCE((accounts.ehentai->>'limit')::integer, 0) + 20000),
+			to_jsonb(
+				LEAST(
+					COALESCE((accounts.ehentai->>'limit')::integer, 0) + 20000,
+					60000
+				)
+			),
 			true
 		)
 		;`,

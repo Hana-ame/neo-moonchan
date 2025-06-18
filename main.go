@@ -9,6 +9,7 @@ import (
 	// "github.com/Hana-ame/neo-moonchan/psql_old"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
+	r2 "github.com/Hana-ame/neo-moonchan/Tools/cloudflare/R2"
 	"github.com/Hana-ame/neo-moonchan/Tools/liblib"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
@@ -91,6 +92,15 @@ func main() {
 		api.GET("/files/:id/:fn", handler.DownloadFilePsql)
 		api.GET("/files/list", handler.ListFilesPsql)
 	} // files 250210
+
+	if tools.HasEnv("R2_NAME") {
+		b, err := r2.NewBucket(os.Getenv("R2_NAME"), os.Getenv("R2_ACCOUNT_ID"), os.Getenv("R2_ACCESS_KEY_ID"), os.Getenv("R2_ACCESS_KEY_SECRET"))
+		if err == nil {
+			api.GET("/r2/upload", handler.File("upload_r2.html"))
+			api.PUT("/r2/upload", b.UploadHandler())
+			api.GET("/r2/:id/:fn", b.DownloadHandler("id"))
+		}
+	}
 
 	api.GET("/ping", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, ctx.GetHeader("X-Forwarded-For"))

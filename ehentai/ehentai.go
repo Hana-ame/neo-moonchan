@@ -101,7 +101,7 @@ func Download(c *gin.Context) {
 		return
 	}
 
-	if cost > 0 && o.GetOrDefault("gp", float64(0)).(float64)+o.GetOrDefault("limit", float64(0)).(float64) < 0 {
+	if cost > 0 && o.GetOrDefault("gp", float64(0)).(float64)+o.GetOrDefault("limit", float64(0)).(float64)-float64(cost) < 0 {
 		c.String(http.StatusForbidden, "limit: %.0f < gp: %.0f", o.GetOrDefault("limit", float64(0)).(float64), o.GetOrDefault("gp", float64(0)).(float64))
 		return
 	}
@@ -229,7 +229,7 @@ func Login(c *gin.Context) {
 	// 验证用户
 	err := db.Exec(func(tx *sql.Tx) error {
 		var pw string
-		err := tx.QueryRow("SELECT password FROM accounts WHERE email = $1", email).Scan(&pw)
+		err := tx.QueryRow("SELECT password FROM accounts WHERE email = LOWER($1)", email).Scan(&pw)
 		if err != nil {
 			// c.String(http.StatusUnauthorized, "Invalid email")
 			return fmt.Errorf("invalid email")
