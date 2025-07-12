@@ -25,7 +25,8 @@ func Register(c *gin.Context) {
 
 	email := o.GetOrDefault("from", "").(string)
 	for _, suffix := range []string{
-		// "protonmail.com",
+		"protonmail.com",
+		"proton.me",
 	} {
 		if strings.HasSuffix(email, suffix) {
 			c.AbortWithStatus(http.StatusForbidden)

@@ -14,6 +14,7 @@ import (
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	middleware "github.com/Hana-ame/neo-moonchan/Tools/my_gin_middleware"
+	"github.com/Hana-ame/neo-moonchan/Tools/openai"
 	"github.com/Hana-ame/neo-moonchan/api/accounts"
 	"github.com/Hana-ame/neo-moonchan/api/inbox"
 	"github.com/Hana-ame/neo-moonchan/api/users"
@@ -79,6 +80,8 @@ func main() {
 		dapp.GET("/collection/:id", nft.GetPostsByOwnershipWithJoin)
 	}
 
+	route.Any("/v1/chat/completions", openai.GinHandler)
+
 	api := route.Group("/api")
 
 	// message
@@ -93,7 +96,7 @@ func main() {
 		api.GET("/files/list", handler.ListFilesPsql)
 	} // files 250210
 
-	if tools.HasEnv("R2_NAME") {
+	if tools.HasEnv("R2_NAME") && tools.HasEnv("R2_ACCOUNT_ID") && tools.HasEnv("R2_ACCESS_KEY_ID") && tools.HasEnv("R2_ACCESS_KEY_SECRET") {
 		b, err := r2.NewBucket(os.Getenv("R2_NAME"), os.Getenv("R2_ACCOUNT_ID"), os.Getenv("R2_ACCESS_KEY_ID"), os.Getenv("R2_ACCESS_KEY_SECRET"))
 		if err == nil {
 			api.GET("/r2/upload", handler.File("upload_r2.html"))
@@ -141,9 +144,6 @@ func main() {
 	// })
 	// end // for static files
 
-	// 1. 配置静态文件服务（对应$uri检查）
-	// route.Static("/static", staticRoot+"/static") // 前端构建产物目录
-
 	// TODO chan 自身的逻辑 path = chan
 	{
 		group := api.Group("/chan")
@@ -153,7 +153,8 @@ func main() {
 		group.POST("/accounts/update", accounts.Update)
 	}
 
-	// activitypub
+	// 以下，activitypub
+	// 不使用 /api 开头
 	route.GET("/.well-known/webfinger", webfinger.Webfinger)
 
 	route.POST("/inbox", inbox.Inbox(true))
@@ -171,7 +172,10 @@ func main() {
 	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
 	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
 
-	route.GET("/favicon.png", handler.RedirectTo(http.StatusTemporaryRedirect, "/favicon.ico"))
+	route.GET("/favicon.png", handler.RedirectTo(http.StatusFound, "/favicon.ico"))
+
+	// 1. 配置静态文件服务（对应$uri检查）
+	// route.Static("/static", staticRoot+"/static") // 前端构建产物目录
 
 	staticRoot := os.Getenv("STATIC_ROOT")
 	// 2. 处理未匹配路由（对应/index.html回退）

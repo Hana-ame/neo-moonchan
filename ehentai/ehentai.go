@@ -218,6 +218,11 @@ func Archiver(c *gin.Context) {
 // route.POST("/bounce_login.php", ehentai.Login)
 func Login(c *gin.Context) {
 
+	if c.GetHeader("Cf-Country") != "CN" {
+		c.Redirect(http.StatusFound, "https://ex.moonchan.xyz/bounce_login.php?gid="+c.Query("gid")+"&token="+c.Query("token"))
+		return
+	}
+
 	c.Request.ParseForm()
 	// for k, v := range c.Request.PostForm {
 	// 	fmt.Printf("Key: %s, Value: %v\n", k, v)

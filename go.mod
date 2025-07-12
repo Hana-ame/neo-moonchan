@@ -1,8 +1,8 @@
 module github.com/Hana-ame/neo-moonchan
 
-go 1.23
+go 1.23.0
 
-toolchain go1.24.2
+toolchain go1.24.4
 
 require (
 	github.com/Hana-ame/httpsig v1.2.1
@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.80.3
 	github.com/fatih/color v1.18.0
+	github.com/gen2brain/avif v0.4.4
 	github.com/gin-contrib/gzip v1.2.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/glebarez/go-sqlite v1.22.0
@@ -22,8 +23,11 @@ require (
 	github.com/jucardi/go-streams/v2 v2.0.2
 	github.com/klauspost/compress v1.17.11
 	github.com/lib/pq v1.10.9
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/stretchr/testify v1.10.0
 	github.com/things-go/go-socks5 v0.0.6
+	github.com/valyala/fastjson v1.6.4
+	golang.org/x/image v0.29.0
 	golang.org/x/net v0.35.0
 	golang.org/x/sys v0.30.0
 	google.golang.org/grpc v1.72.1
@@ -51,6 +55,7 @@ require (
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/ebitengine/purego v0.8.3 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -68,11 +73,12 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.13.0 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/text v0.27.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.37.6 // indirect

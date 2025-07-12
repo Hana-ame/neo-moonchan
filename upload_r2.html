@@ -91,11 +91,11 @@
         }).then(r => r.json())
           .then(resp => {
             // 构造下载链接
-            const downloadURL = `https://chat.moonchan.xyz/api/files/${resp.key}/${file.name}`;
+            const downloadURL = `https://${location.href}/api/files/${resp.key}/${file.name}`;
             img.src = downloadURL;
             urlLink.value = downloadURL;
             // 删除链接需要根据新API调整（示例保持原结构，可能需要修改）
-            delLink.value = `https://wsl.moonchan.xyz/api/delete/${resp.key}/${resp.key}`;
+            delLink.value = `暂不支持`;
           }).catch(error => {
             console.error('Upload failed:', error);
           });

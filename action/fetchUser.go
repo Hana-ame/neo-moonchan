@@ -18,7 +18,7 @@ import (
 func FetchWebfinger(acct string) (id string, err error) {
 	host := tools.NewSlice(strings.Split(acct, "@")...).Last().Result()
 	username := tools.NewSlice(strings.Split(acct, "@")...).FirstUnequal("")
-	webfinger, err := myfetch.FetchJSON(http.MethodGet, "https://"+host+"/.well-known/webfinger?resource=acct:"+username+"@"+host, nil, nil)
+	_, webfinger, err := myfetch.FetchJSON(http.MethodGet, "https://"+host+"/.well-known/webfinger?resource=acct:"+username+"@"+host, nil, nil)
 	if err != nil {
 		return
 	}
@@ -34,7 +34,7 @@ func FetchWebfinger(acct string) (id string, err error) {
 }
 
 func FetchUser(id string) (user *orderedmap.OrderedMap, err error) {
-	user, err = myfetch.FetchJSON(http.MethodGet, id, nil, nil)
+	_, user, err = myfetch.FetchJSON(http.MethodGet, id, nil, nil)
 	if err != nil {
 		return
 	}
