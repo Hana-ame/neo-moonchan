@@ -9,7 +9,7 @@ import (
 
 	"github.com/Hana-ame/httpsig"
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
-	"github.com/Hana-ame/neo-moonchan/Tools/db"
+	db "github.com/Hana-ame/neo-moonchan/Tools/db/pq"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	"github.com/Hana-ame/neo-moonchan/psql"
 )

@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
-	"github.com/Hana-ame/neo-moonchan/Tools/db"
+	db "github.com/Hana-ame/neo-moonchan/Tools/db/pq"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	"github.com/Hana-ame/neo-moonchan/Tools/orderedmap"

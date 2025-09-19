@@ -10,7 +10,6 @@ import (
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
 	r2 "github.com/Hana-ame/neo-moonchan/Tools/cloudflare/R2"
-	"github.com/Hana-ame/neo-moonchan/Tools/liblib"
 	myfetch "github.com/Hana-ame/neo-moonchan/Tools/my_fetch"
 	handler "github.com/Hana-ame/neo-moonchan/Tools/my_gin_handler"
 	middleware "github.com/Hana-ame/neo-moonchan/Tools/my_gin_middleware"
@@ -19,9 +18,7 @@ import (
 	"github.com/Hana-ame/neo-moonchan/api/inbox"
 	"github.com/Hana-ame/neo-moonchan/api/users"
 	"github.com/Hana-ame/neo-moonchan/api/webfinger"
-	"github.com/Hana-ame/neo-moonchan/ehentai"
-	"github.com/Hana-ame/neo-moonchan/nft"
-	"github.com/Hana-ame/neo-moonchan/register"
+	"github.com/Hana-ame/neo-moonchan/twitter"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
@@ -42,44 +39,7 @@ func main() {
 
 	route.Use(middleware.CORSMiddleware())
 
-	// no longer needed
-	if tools.HasEnv("DAPP") {
-		dapp := route.Group("/dapp")
-		dapp.GET("/debug", nft.DebugInfo)
-		dapp.GET("/cov/2edge", nft.Conv2Edge)
-
-		dapp.POST("/generate/webui/img2img/ultra", liblib.Img2Img)
-		dapp.POST("/generate/webui/text2img/ultra", liblib.Text2Img)
-		dapp.POST("/generate/webui/status", liblib.GetStatus)
-
-		// user object
-		dapp.POST("/register", nft.Register)
-		dapp.POST("/login", nft.Login)
-		dapp.GET("/user/:username", nft.GetUserProfile)
-		dapp.PATCH("/user/:username", nft.SetUserProfile)
-		// post object
-		dapp.POST("/post/create", nft.CreatePost)
-
-		dapp.GET("/post/:id", nft.GetPost)
-		dapp.PATCH("/post/:id", nft.CreatePost)
-
-		dapp.GET("post/:id/owner", nft.GetOwnerOfPost)
-		dapp.POST("post/:id/owner", nft.ChangeOwnerOfPost)
-		dapp.PATCH("post/:id/owner", nft.PatchOwnerOfPost)
-
-		dapp.GET("/user/:username/posts", nft.GetPostsByUsername)
-		dapp.GET("/user/:username/owned", nft.GetPostsByOwnershipWithJoin)
-
-		// comment object
-		dapp.GET("/post/:id/comment")
-		dapp.POST("/post/:id/comment")
-
-		// catagory
-		dapp.GET("/explore", nft.GetNewPosts)
-		dapp.GET("/explore/:tag", nft.GetPostsByTagWithJoin)
-		dapp.GET("/collection/:id", nft.GetPostsByOwnershipWithJoin)
-	}
-
+	// for bili
 	route.Any("/v1/chat/completions", openai.GinHandler)
 
 	api := route.Group("/api")
@@ -110,67 +70,12 @@ func main() {
 	})
 	api.Any("/echo", handler.Echo)
 
-	// ehentai
-	if tools.HasEnv("EX_COOKIE") {
-		api.POST("/register/by-mail", register.Register)
+	// 删除了ehentai的下载方式,没人用
 
-		// ehentai
-		route.GET("/archiver.php", ehentai.Archiver)
-		route.POST("/archiver.php", ehentai.Download)
-		route.HEAD("/archiver.php", ehentai.Archiver)
-		route.GET("/bounce_login.php", handler.File("bounce_login.html"))
-		route.POST("/bounce_login.php", ehentai.Login)
-		route.HEAD("/bounce_login.php", handler.File("bounce_login.html"))
-	} // ehentai
+	chanRouter(api.Group("/chan"))
+	mastodonRouter(route)
 
-	// for static files
-	// staticRoot := os.Getenv("STATIC_ROOT")
-	// filelist := []string{
-	// 	"asset-manifest.json",
-	// 	"favicon.ico",
-	// 	"google5f29119424eae036.html",
-	// 	"index.html",
-	// 	"logo192.png",
-	// 	"manifest.json",
-	// 	"robots.txt",
-	// 	"sw.js",
-	// }
-	// for _, path := range filelist {
-	// 	route.GET("/"+path, handler.File(filepath.Join(staticRoot, path)))
-	// }
-	// route.GET("/static/*any", func(c *gin.Context) {
-	// 	path := filepath.Join(staticRoot, "static", (c.Param("any")))
-	// 	handler.File(path)(c)
-	// })
-	// end // for static files
-
-	// TODO chan 自身的逻辑 path = chan
-	{
-		group := api.Group("/chan")
-		group.POST("/accounts/register", accounts.Register)
-		group.POST("/accounts/login", accounts.Login)
-		group.POST("/accounts/google/login", accounts.Login)
-		group.POST("/accounts/update", accounts.Update)
-	}
-
-	// 以下，activitypub
-	// 不使用 /api 开头
-	route.GET("/.well-known/webfinger", webfinger.Webfinger)
-
-	route.POST("/inbox", inbox.Inbox(true))
-	route.POST("/users/:username/inbox", inbox.Inbox(true))
-
-	route.GET("/users/:username", users.Users)
-
-	// mastodon 的这部分根本不支持，敢情只是抓个初态。
-	route.GET("/users/:username/outbox", users.Outbox)
-	route.GET("/users/:username/following", users.Following)
-	route.GET("/users/:username/followers", users.Followers)
-	route.GET("/users/:username/collections/featured", users.Featured)
-	route.GET("/users/:username/collections/tags", users.Tags)
-
-	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
-	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
+	twitterRouter(api.Group("/twitter"))
 
 	route.GET("/favicon.png", handler.RedirectTo(http.StatusFound, "/favicon.ico"))
 
@@ -181,8 +86,11 @@ func main() {
 	// 2. 处理未匹配路由（对应/index.html回退）
 	route.NoRoute(func(c *gin.Context) {
 		// debug
-		c.File("o.html")
-		return
+		if staticRoot == "" {
+			c.File("o.html")
+			return
+		}
+
 		// 获取请求路径（如 "/asset-manifest.json"）
 		requestedPath := c.Request.URL.Path
 		// 拼接完整文件路径
@@ -202,4 +110,39 @@ func main() {
 
 	route.Run(os.Getenv("LISTEN_ADDR")) // listen and serve on
 	// ~/script/vps/ssh.sh -R 127.24.7.29:8080:127.24.7.29:8080
+}
+
+func chanRouter(group *gin.RouterGroup) {
+	group.POST("/accounts/register", accounts.Register)
+	group.POST("/accounts/login", accounts.Login)
+	group.POST("/accounts/google/login", accounts.Login)
+	group.POST("/accounts/update", accounts.Update)
+}
+
+func mastodonRouter(route *gin.Engine) {
+	// 以下，activitypub
+	// 不使用 /api 开头
+	route.GET("/.well-known/webfinger", webfinger.Webfinger)
+
+	route.POST("/inbox", inbox.Inbox(true))
+	route.POST("/users/:username/inbox", inbox.Inbox(true))
+
+	route.GET("/users/:username", users.Users)
+
+	// mastodon 的这部分根本不支持，敢情只是抓个初态。
+	route.GET("/users/:username/outbox", users.Outbox)
+	route.GET("/users/:username/following", users.Following)
+	route.GET("/users/:username/followers", users.Followers)
+	route.GET("/users/:username/collections/featured", users.Featured)
+	route.GET("/users/:username/collections/tags", users.Tags)
+
+	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
+	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
+
+}
+
+func twitterRouter(g *gin.RouterGroup) {
+	g.POST("/", twitter.CreateMetaData)
+	g.GET("/:fn", twitter.GetMetaData)
+	g.GET("/", twitter.GetLists)
 }

@@ -8,7 +8,7 @@ import (
 	"os"
 
 	tools "github.com/Hana-ame/neo-moonchan/Tools"
-	"github.com/Hana-ame/neo-moonchan/Tools/db"
+	db "github.com/Hana-ame/neo-moonchan/Tools/db/pq"
 	"github.com/Hana-ame/neo-moonchan/Tools/orderedmap"
 	"github.com/Hana-ame/neo-moonchan/psql"
 	"github.com/gin-gonic/gin"

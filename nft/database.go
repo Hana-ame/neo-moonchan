@@ -3,7 +3,7 @@ package nft
 import (
 	"database/sql"
 
-	tools_db "github.com/Hana-ame/neo-moonchan/Tools/db"
+	tools_db "github.com/Hana-ame/neo-moonchan/Tools/db/pq"
 	log "github.com/Hana-ame/neo-moonchan/Tools/debug"
 	"github.com/gin-gonic/gin"
 )
