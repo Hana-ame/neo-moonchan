@@ -174,7 +174,8 @@ def get_media_data_by_username(username:str):
 
 
 output = get_media_data_by_username(username)
-info: Any = output.get("account_info")
+info: Any = output.get("account_info")  
+# print(output)
 
 with open(f"{info.get('name')}.json", "w") as f:
     json.dump(output, f)
@@ -187,18 +188,26 @@ conn = sqlite3.connect('twitter.db', timeout=5)
 try:
     conn.execute('PRAGMA journal_mode=WAL;')  # 启用 WAL 模式
     cursor = conn.cursor()
+    
+    # 使用 ON CONFLICT DO UPDATE SET 来精确控制冲突时的更新行为
     query = """
-    INSERT OR REPLACE INTO users (username, nick, status, last_modify)
+    INSERT INTO users (username, nick, status, last_modify)
     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(username) 
+    DO UPDATE SET 
+        nick = excluded.nick,
+        last_modify = CURRENT_TIMESTAMP
+    -- 注意：这里没有更新 status 字段，因此冲突时会保留原有的 status 值
     """
+    
     # info: Any = output.get("account_info")
-    cursor.execute(query, (info.get('name'), info.get('nick'), "SUCCESS"))
+    cursor.execute(query, (info.get('name'), info.get('nick'), "SUCCESS")) # 新插入的行 status 为 "SUCCESS"
     conn.commit()  # 及时提交事务
-except Exception:
+    
+except Exception as e:
+    print(f"An error occurred: {e}") # 建议至少打印异常信息
     conn.rollback()
-    pass
 finally:
     conn.close()
 
-
-print(output)
+# print(output)
