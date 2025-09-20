@@ -174,7 +174,9 @@ def get_media_data_by_username(username:str):
 
 
 output = get_media_data_by_username(username)
-with open(f"{username}.json", "w") as f:
+info: Any = output.get("account_info")
+
+with open(f"{info.get('name')}.json", "w") as f:
     json.dump(output, f)
     
 # 存储入"twitter.db",是一个sqlite3数据库
@@ -189,7 +191,7 @@ try:
     INSERT OR REPLACE INTO users (username, nick, status, last_modify)
     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
     """
-    info: Any = output.get("account_info")
+    # info: Any = output.get("account_info")
     cursor.execute(query, (info.get('name'), info.get('nick'), "SUCCESS"))
     conn.commit()  # 及时提交事务
 except Exception:
