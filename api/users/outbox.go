@@ -44,7 +44,7 @@ func Outbox(c *gin.Context) {
 		return tx.Commit()
 	})
 
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", "https://"+host+"/users/"+username+"/outbox"),
 		orderedmap.NewPair("type", "OrderedCollection"),

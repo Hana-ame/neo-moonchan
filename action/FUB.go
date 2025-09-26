@@ -27,7 +27,7 @@ func Follow(actor, object string) error {
 	id := "https://" + os.Getenv("HOST") + "/" + uuid.NewString()
 
 	// new follow object
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", id),
 		orderedmap.NewPair("type", "Follow"),
@@ -116,7 +116,7 @@ func Block(actor, object string) error {
 
 	id := "https://" + os.Getenv("HOST") + "/" + uuid.NewString()
 
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", id),
 		orderedmap.NewPair("type", "Block"),
@@ -350,7 +350,7 @@ func newUndoObject(actor string, object *orderedmap.OrderedMap) (*orderedmap.Ord
 		return object, err
 	}
 	id = id + "#undo"
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", id),
 		orderedmap.NewPair("type", "Undo"),

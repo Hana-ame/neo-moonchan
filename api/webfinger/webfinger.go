@@ -66,24 +66,24 @@ func Webfinger(c *gin.Context) {
 		return
 	}
 
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("subject", subject),
 		orderedmap.NewPair("aliases", tools.Slice[string]{
 			"https://" + host + "/@" + username,
 			"https://" + host + "/users/" + username,
 		}),
 		orderedmap.NewPair("links", tools.Slice[*orderedmap.OrderedMap]{
-			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+			tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "http://webfinger.net/rel/profile-page"),
 				orderedmap.NewPair("type", "text/html"),
 				orderedmap.NewPair("href", "https://"+host+"/@"+username),
 			}),
-			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+			tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "self"),
 				orderedmap.NewPair("type", "application/activity+json"),
 				orderedmap.NewPair("href", "https://"+host+"/users/"+username),
 			}),
-			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+			tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("rel", "http://ostatus.org/schema/1.0/subscribe"),
 				orderedmap.NewPair("template", "https://"+host+"/authorize_interaction?uri={uri}"),
 			}),

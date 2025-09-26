@@ -3,6 +3,7 @@ import os
 import sys
 from dotenv import load_dotenv
 import json
+import gzip
 import sqlite3
 import traceback
 from datetime import datetime
@@ -179,7 +180,10 @@ info: Any = output.get("account_info")
 
 with open(f"{info.get('name')}.json", "w") as f:
     json.dump(output, f)
-    
+
+with gzip.open(f"{info.get('name')}.json.gz", "wt", encoding="utf-8", compresslevel=9) as f:
+    f.write(json.dumps(output))
+
 # 存储入"twitter.db",是一个sqlite3数据库
 # 要求	query = `INSERT OR REPLACE INTO users (username, nick, status, last_modify)
 #                                      VALUES (?, ?, ?, CURRENT_TIMESTAMP)`

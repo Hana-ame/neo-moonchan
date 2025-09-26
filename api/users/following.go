@@ -27,7 +27,7 @@ func Following(c *gin.Context) {
 	}
 
 	count := 0
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", "https://"+host+"/users/"+username+"/following"),
 		orderedmap.NewPair("type", "OrderedCollection"),

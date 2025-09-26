@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// "github.com/Hana-ame/neo-moonchan/api"
 	// "github.com/Hana-ame/neo-moonchan/psql_old"
@@ -35,9 +36,12 @@ func main() {
 
 	route := gin.Default()
 
-	route.Use(gzip.Gzip(gzip.DefaultCompression))
+	route.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithCustomShouldCompressFn(func(c *gin.Context) bool {
+		return !strings.HasSuffix(c.Request.URL.Path, ".gz")
+	})))
 
 	route.Use(middleware.CORSMiddleware())
+	route.Use(middleware.ProxyMiddleware())
 
 	// for bili
 	route.Any("/v1/chat/completions", openai.GinHandler)
@@ -75,7 +79,7 @@ func main() {
 	chanRouter(api.Group("/chan"))
 	mastodonRouter(route)
 
-	twitterRouter(api.Group("/twitter"))
+	twitter.AddToGroup(api.Group("/twitter"))
 
 	route.GET("/favicon.png", handler.RedirectTo(http.StatusFound, "/favicon.ico"))
 
@@ -90,6 +94,9 @@ func main() {
 			c.File("o.html")
 			return
 		}
+
+		// referer := c.GetHeader("Referer")
+		// log.Println(referer)
 
 		// 获取请求路径（如 "/asset-manifest.json"）
 		requestedPath := c.Request.URL.Path
@@ -139,10 +146,4 @@ func mastodonRouter(route *gin.Engine) {
 	// route.GET("/users/:username/inbox", )	 // mastodon没实现，这里实现了之后用
 	// route.POST("/users/:username/outbox", )    // mastodon没实现，这里实现了之后用
 
-}
-
-func twitterRouter(g *gin.RouterGroup) {
-	g.POST("/", twitter.CreateMetaData)
-	g.GET("/:fn", twitter.GetMetaData)
-	g.GET("/", twitter.GetLists)
 }

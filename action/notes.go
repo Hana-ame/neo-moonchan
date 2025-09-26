@@ -26,10 +26,10 @@ func Create(object *orderedmap.OrderedMap) error {
 	if err != nil {
 		return err
 	}
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", tools.Slice[any]{
 			"https://www.w3.org/ns/activitystreams",
-			tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+			tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 				orderedmap.NewPair("ostatus", "http://ostatus.org#"),
 				orderedmap.NewPair("atomUri", "ostatus:atomUri"),
 				orderedmap.NewPair("inReplyToAtomUri", "ostatus:inReplyToAtomUri"),

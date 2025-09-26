@@ -86,7 +86,7 @@ func Devices(c *gin.Context) {
 	username := c.Param("username")
 
 	count := 0
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", "https://"+host+"/users/"+username+"/collections/devices"),
 		orderedmap.NewPair("type", "Collection"),
@@ -112,7 +112,7 @@ func Tags(c *gin.Context) {
 	username := c.Param("username")
 
 	count := 0
-	o := tools.OrderedMap(tools.Slice[*orderedmap.Pair]{
+	o := tools.OrderedMapFromKVArray(tools.Slice[*orderedmap.Pair]{
 		orderedmap.NewPair("@context", "https://www.w3.org/ns/activitystreams"),
 		orderedmap.NewPair("id", "https://"+host+"/users/"+username+"/collections/tags"),
 		orderedmap.NewPair("type", "Collection"),

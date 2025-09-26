@@ -39,12 +39,22 @@ func GetMetaData(c *gin.Context) {
 
 	// 根据fn打开文件返回
 
-	result, err := tools.FileToJSON(path.Join(os.Getenv("TWITTER_DIR"), fn))
-	if tools.AbortWithError(c, 404, err) {
+	f, err := os.Open(path.Join(os.Getenv("TWITTER_DIR"), fn))
+	if tools.AbortWithError(c, 500, err) {
+		return
+	}
+	fileInfo, err := f.Stat()
+	if tools.AbortWithError(c, 500, err) {
 		return
 	}
 
-	c.JSON(200, result)
+	c.DataFromReader(200, fileInfo.Size(), "application/json", f, map[string]string{"content-encoding": "gzip"})
+	// result, err := tools.FileToJSON(path.Join(os.Getenv("TWITTER_DIR"), fn))
+	// if tools.AbortWithError(c, 404, err) {
+	// 	return
+	// }
+
+	// c.JSON(200, result)
 }
 
 // :fn
@@ -75,4 +85,10 @@ func GetLists(c *gin.Context) {
 	c.String(http.StatusNotImplemented, "not implemented")
 
 	return
+}
+
+func AddToGroup(g *gin.RouterGroup) {
+	g.POST("/", CreateMetaData)
+	g.GET("/:fn", GetMetaData)
+	g.GET("/", GetLists)
 }
