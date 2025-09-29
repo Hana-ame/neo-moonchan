@@ -6,7 +6,7 @@ import json
 import gzip
 import sqlite3
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from gallery_dl.extractor import twitter
 from typing import Any
 
@@ -20,6 +20,38 @@ username =  sys.argv[1] if len(sys.argv) > 1 else "lulu463098"
 
 # print(username)
 # print(auth_token())
+
+def should_skip_processing(username):
+    """
+    检查是否应该跳过处理（最后修改在一天内）
+    """
+    conn = sqlite3.connect('twitter.db', timeout=5)
+    try:
+        conn.execute('PRAGMA journal_mode=WAL;')
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT last_modify FROM users WHERE username = ?", (username,))
+        result = cursor.fetchone()
+        
+        if result:
+            last_modify = datetime.strptime(result[0], "%Y-%m-%d %H:%M:%S")
+            return (datetime.now() - last_modify) <= timedelta(days=1)
+        
+        return False # 首次
+        
+    except Exception as e:
+        print(f"查询错误: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+if should_skip_processing(username):
+    print("直接返回，不执行后续操作")
+    exit(1)
+    # 直接退出或返回
+
+
 
 def get_media_data_by_username(username:str):
     url = f"https://x.com/{username}/media"
