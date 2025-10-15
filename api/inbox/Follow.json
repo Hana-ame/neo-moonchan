@@ -1,7 +1,0 @@
-{
-    "@context": "https://www.w3.org/ns/activitystreams",
-    "id": "https://mstdn.jp/19d9313f-8903-42e5-b5c1-75f32a0f029c",
-    "type": "Follow",
-    "actor": "https://mstdn.jp/users/nanakananoka",
-    "object": "https://fedi.moonchan.xyz/users/nanakananoka"
-}

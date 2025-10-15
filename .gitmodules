@@ -2,9 +2,3 @@
 	path = Tools
 	url = https://github.com/Hana-ame/Tools.git
 	branch = go
-[submodule "fedi-antenna"]
-	path = fedi-antenna
-	url = git@github.com:Hana-ame/fedi-antenna.git
-[submodule "httpsig"]
-	path = httpsig
-	url = git@github.com:Hana-ame/httpsig
